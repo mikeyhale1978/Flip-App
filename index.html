@@ -659,9 +659,9 @@ async function doSearch() {
 
   try {
     // Two tiny calls using key=value format — never truncates, always parses
-    var numPrompt = 'Current 2025-2026 eBay prices for: ' + cardQ + '\nWrite ONLY these lines, fill in real numbers after each = sign:\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\npsa10_pop=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=';
+    var numPrompt = 'You are a sports card price lookup tool. For the card: ' + cardQ + ', fill in each blank with a number based on recent eBay sold listings. No disclaimers, no explanations, just the numbers.\n\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\npsa10_pop=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=\n\nFill every = with a realistic number. Example: psa10_value=1500';
 
-    var txtPrompt = 'Card details for: ' + cardQ + '\nWrite ONLY these lines, fill in real values after each = sign:\nplayer=\ncard_name=\nsport=\nmanufacturer=\nmomentum=\nrisk=\ngrading_worth_it=\nwhere_to_buy=\nwhere_to_sell=\nmarket_summary=\nflip_advice=';
+    var txtPrompt = 'Trading card lookup tool. For: ' + cardQ + ', fill each blank with a short real value. No disclaimers, just answers.\n\nplayer=\ncard_name=\nsport=\nmanufacturer=\nmomentum=\nrisk=\ngrading_worth_it=\nwhere_to_buy=\nwhere_to_sell=\nmarket_summary=\nflip_advice=\n\nExample: player=Patrick Mahomes';
 
     var results = await Promise.all([callGemini(numPrompt), callGemini(txtPrompt)]);
     clearInterval(srchTimer);
