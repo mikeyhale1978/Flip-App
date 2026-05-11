@@ -659,107 +659,44 @@ async function doSearch() {
   var cardQ = q + (t?' ('+t+')':'');
 
   try {
-    var singlePrompt = 'Trading card market data for: '+cardQ+'\n\nReturn ONLY this JSON with ALL fields filled with real non-zero market values:\n{"found":true,"player":"FULL NAME","card_name":"YEAR SET NAME","sport":"SPORT","manufacturer":"BRAND","psa10_value":0,"psa9_value":0,"raw_avg":0,"raw_low":0,"raw_high":0,"psa10_pop":0,"raw_flip_sell":0,"raw_flip_roi":0,"graded_flip_roi":0,"psa10_multiplier":0,"grading_worth_it":true,"momentum":"hot","risk":"low","where_to_buy":"eBay card shows","where_to_sell":"eBay Whatnot","market_summary":"one sentence","flip_advice":"one sentence","psa10_pop_note":"estimate only"}\n\nReplace ALL placeholder values with real accurate data for '+cardQ+'. Every number must be non-zero.';
-    var r1 = await callGemini(singlePrompt);
+    // Two tiny calls using key=value format — never truncates, always parses
+    var numPrompt = 'Current 2025-2026 eBay prices for: ' + cardQ + '\nWrite ONLY these lines, fill in real numbers after each = sign:\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\npsa10_pop=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=';
+
+    var txtPrompt = 'Card details for: ' + cardQ + '\nWrite ONLY these lines, fill in real values after each = sign:\nplayer=\ncard_name=\nsport=\nmanufacturer=\nmomentum=\nrisk=\ngrading_worth_it=\nwhere_to_buy=\nwhere_to_sell=\nmarket_summary=\nflip_advice=';
+
+    var results = await Promise.all([callGemini(numPrompt), callGemini(txtPrompt)]);
     clearInterval(srchTimer);
     document.getElementById('srch-loading').classList.remove('show');
 
-    var combined = {found:true};
-    [r1].forEach(function(txt){
-      try{
-        var obj = parseJSON(txt);
-        Object.keys(obj).forEach(function(k){
-          var v = obj[k];
-          if(typeof v==='number'&&v!==0) combined[k]=v;
-          else if(typeof v!=='number'&&(combined[k]===undefined||combined[k]==='')) combined[k]=v;
-          else if(combined[k]===undefined) combined[k]=v;
-        });
-      }catch(e){}
+    function parseLines(txt) {
+      var obj = {};
+      if (!txt) return obj;
+      txt.split('\n').forEach(function(line) {
+        line = line.trim().replace(/^[-*•]\s*/, '');
+        var eq = line.indexOf('=');
+        if (eq < 1) return;
+        var k = line.slice(0, eq).trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/gi, '');
+        var v = line.slice(eq + 1).trim().replace(/[*_`"]/g, '');
+        if (!k || !v || v === '') return;
+        var num = parseFloat(v);
+        if (!isNaN(num) && num > 0) obj[k] = num;
+        else if (v.toLowerCase() === 'true') obj[k] = true;
+        else if (v.toLowerCase() === 'false') obj[k] = false;
+        else obj[k] = v;
+      });
+      return obj;
+    }
+
+    var combined = {found: true};
+    results.forEach(function(txt) {
+      var parsed = parseLines(txt);
+      Object.keys(parsed).forEach(function(k) {
+        var v = parsed[k];
+        if (typeof v === 'number' && v !== 0) combined[k] = v;
+        else if (typeof v !== 'number' && !combined[k]) combined[k] = v;
+      });
     });
 
-    // Ensure numbers
-    function n(v){var x=parseFloat(v);return isNaN(x)?0:x;}
-    combined.raw_avg=n(combined.raw_avg); combined.raw_low=n(combined.raw_low);
-    combined.raw_high=n(combined.raw_high); combined.psa10_value=n(combined.psa10_value);
-    combined.psa9_value=n(combined.psa9_value); combined.psa10_pop=n(combined.psa10_pop);
-    combined.raw_flip_sell=n(combined.raw_flip_sell)||Math.round(combined.raw_avg*1.3);
-    combined.raw_flip_roi=n(combined.raw_flip_roi); combined.graded_flip_roi=n(combined.graded_flip_roi);
-    combined.psa10_multiplier=n(combined.psa10_multiplier)||(combined.raw_avg>0?parseFloat((combined.psa10_value/combined.raw_avg).toFixed(1)):0);
-    combined.momentum=combined.momentum||'stable'; combined.risk=combined.risk||'medium';
-    combined.player=combined.player||q; combined.sport=combined.sport||'Unknown';
-
-    var buyGreat=Math.round(combined.raw_avg*0.7);
-    var buyGood=Math.round(combined.raw_avg*0.85);
-    var gradedProfit=Math.round(combined.psa10_value*(1-0.129)-0.30-combined.raw_avg-25-4);
-    var momIcon=combined.momentum==='hot'?'🔥':combined.momentum==='rising'?'📈':combined.momentum==='cooling'?'📉':'➡️';
-    var momCls='tag-'+(combined.momentum==='hot'?'hot':combined.momentum==='rising'?'rising':'stable');
-    var riskCls='tag-'+(combined.risk==='low'?'low':combined.risk==='high'?'high':'medium');
-
-    var html = '<div class="result-card">'
-      +'<div class="result-header">'
-        +'<div class="result-name">'+combined.player+'</div>'
-        +'<div class="result-set">'+combined.card_name+'</div>'
-        +'<div class="result-tags">'
-          +'<span class="tag">'+combined.sport+'</span>'
-          +'<span class="tag '+momCls+'">'+momIcon+' '+(combined.momentum||'stable').toUpperCase()+'</span>'
-          +'<span class="tag '+riskCls+'">● '+(combined.risk||'medium').toUpperCase()+' RISK</span>'
-          +(combined.grading_worth_it?'<span class="tag tag-rising">✅ GRADE IT</span>':'<span class="tag tag-stable">⏭ SKIP GRADING</span>')
-        +'</div>'
-      +'</div>'
-      // Buy guide
-      +'<div style="padding:14px 14px 0">'
-        +'<div class="panel-title">🛒 PURCHASE PRICE GUIDE</div>'
-        +'<div class="buy-guide">'
-          +'<div class="buy-tier bt-green"><div class="buy-emoji">🎯</div><div class="buy-label" style="color:var(--accent)">GREAT DEAL</div><div class="buy-price" style="color:var(--accent)">$'+buyGreat+'</div><div class="buy-hint">or under — buy it</div></div>'
-          +'<div class="buy-tier bt-gold"><div class="buy-emoji">👍</div><div class="buy-label" style="color:var(--gold)">GOOD PRICE</div><div class="buy-price" style="color:var(--gold)">$'+buyGood+'</div><div class="buy-hint">solid margin</div></div>'
-          +'<div class="buy-tier bt-red"><div class="buy-emoji">⚠️</div><div class="buy-label" style="color:var(--red)">MAX PAY</div><div class="buy-price" style="color:var(--red)">$'+combined.raw_avg+'</div><div class="buy-hint">avg — negotiate</div></div>'
-        +'</div>'
-      +'</div>'
-      // Market prices
-      +'<div style="padding:0 14px 14px">'
-        +'<div class="panel-title" style="margin-top:12px">📊 MARKET PRICES</div>'
-        +'<div class="stat-grid cols3" style="margin-bottom:8px">'
-          +'<div class="stat-cell"><div class="stat-label">Raw Low</div><div class="stat-val c-white">$'+combined.raw_low+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">Raw Avg</div><div class="stat-val c-gold">$'+combined.raw_avg+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">Raw High</div><div class="stat-val c-white">$'+combined.raw_high+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">PSA 9</div><div class="stat-val c-green">$'+combined.psa9_value+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">PSA 10</div><div class="stat-val c-green">$'+combined.psa10_value+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">PSA 10 Pop <span style="color:var(--gold);font-size:7px">EST</span></div><div class="stat-val '+(combined.psa10_pop>0?'c-purple':'c-gold')+'">'+( combined.psa10_pop>0?'~'+combined.psa10_pop:'—'  )+'</div></div>'
-        +'</div>'
-        +'<div class="pop-note"><div class="pop-note-txt">⚠️ Pop count is an estimate — verify before buying</div><a class="pop-verify" href="https://www.psacard.com/pop" target="_blank">✓ VERIFY<br>PSA POP</a></div>'
-      +'</div>'
-      // Raw flip
-      +'<div style="padding:0 14px 14px">'
-        +'<div class="flip-bar-label">💰 RAW FLIP (buy & sell ungraded)</div>'
-        +'<div class="flip-bar-grid" style="border-radius:8px;overflow:hidden">'
-          +'<div class="flip-cell"><div class="flip-lbl">BUY TARGET</div><div class="flip-val c-white">$'+combined.raw_low+'</div></div>'
-          +'<div class="flip-cell"><div class="flip-lbl">SELL RAW</div><div class="flip-val c-gold">~$'+combined.raw_flip_sell+'</div></div>'
-          +'<div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val '+(combined.raw_flip_roi>0?'c-green':'c-red')+'">'+Math.round(combined.raw_flip_sell*(1-0.129)-0.30-combined.raw_low)+'</div></div>'
-          +'<div class="flip-cell"><div class="flip-lbl">RAW ROI</div><div class="flip-val '+(combined.raw_flip_roi>=20?'c-green':'c-gold')+'">'+(combined.raw_flip_roi>=0?'+':'')+combined.raw_flip_roi+'%</div></div>'
-        +'</div>'
-      +'</div>'
-      // Graded flip
-      +'<div style="padding:0 14px 14px">'
-        +'<div class="flip-bar-label" style="color:var(--accent)">🏆 GRADED FLIP (buy raw → PSA 10)</div>'
-        +'<div class="stat-grid cols3" style="margin-bottom:8px">'
-          +'<div class="stat-cell"><div class="stat-label">Buy Raw</div><div class="stat-val c-white">$'+combined.raw_avg+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">Grading</div><div class="stat-val" style="color:#ff6b35">$25</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">PSA 10 Sale</div><div class="stat-val c-green">$'+combined.psa10_value+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">Net Profit</div><div class="stat-val '+(gradedProfit>0?'c-green':'c-red')+'">'+(gradedProfit>0?'+':'')+gradedProfit+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">Graded ROI</div><div class="stat-val '+(combined.graded_flip_roi>=30?'c-green':combined.graded_flip_roi>=0?'c-gold':'c-red')+'">'+(combined.graded_flip_roi>=0?'+':'')+combined.graded_flip_roi+'%</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">Multiplier</div><div class="stat-val c-purple">'+combined.psa10_multiplier+'x</div></div>'
-        +'</div>'
-        +'<div class="advice-box">'+combined.market_summary+'<br><br><strong style="color:var(--accent)">Flip Advice:</strong> '+combined.flip_advice+'</div>'
-      +'</div>'
-      // Action buttons
-      +'<div style="padding:0 14px 14px;display:flex;gap:8px">'
-        +'<button class="btn btn-green" style="flex:1;margin:0;font-size:14px;padding:10px" onclick="loadIntoCalc('+combined.raw_avg+','+combined.psa10_value+')">⚡ LOAD INTO CALC</button>'
-        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(combined.player+' '+combined.card_name.split(' ').slice(0,4).join(' '))+'+PSA+10&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="display:flex;align-items:center">🔍 EBAY</a>'
-        +'<a href="https://130point.com" target="_blank" class="btn-sm" style="display:flex;align-items:center">📊 COMPS</a>'
-      +'</div>'
-    +'</div>';
-
-    document.getElementById('srch-results').innerHTML = html;
   } catch(err) {
     clearInterval(srchTimer);
     document.getElementById('srch-loading').classList.remove('show');
