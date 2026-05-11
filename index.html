@@ -659,17 +659,18 @@ async function doSearch() {
   // Run 3 focused calls in parallel - each tiny so never truncates
   var cardQ = q + (t?' ('+t+')':'');
 
-  var p1 = callGemini('Current eBay sold prices for trading card: '+cardQ+'\nReturn ONLY this JSON with real non-zero numbers for all fields:\n{"psa10_value":0,"psa9_value":0,"raw_avg":0,"raw_low":0,"raw_high":0,"psa10_pop":0}\nAll 6 fields required with real market values. No zeros allowed.');
+  var p1 = callGemini('Current eBay sold prices for trading card: '+cardQ+'\nReturn ONLY this JSON with real non-zero numbers for all fields:\n{"psa10_value":0,"psa9_value":0,"raw_avg":0,"raw_low":0,"raw_high":0}\nAll 5 fields required with real market values. No zeros allowed.');
   var p2 = callGemini('Trading card flip metrics for: '+cardQ+'\nReturn ONLY this JSON with real non-zero numbers:\n{"raw_flip_sell":0,"raw_flip_roi":0,"graded_flip_roi":0,"psa10_multiplier":0,"grading_worth_it":true}\nAll fields required with real calculated values.');
   var p3 = callGemini('Trading card info for: '+cardQ+'\nReturn ONLY this JSON with short real values:\n{"found":true,"player":"NAME","card_name":"SET","sport":"SPORT","manufacturer":"BRAND","momentum":"hot","risk":"low","where_to_buy":"eBay","where_to_sell":"eBay","market_summary":"ONE SENTENCE","flip_advice":"ONE SENTENCE","psa10_pop_note":"estimate only"}');
+  var p4 = callGemini('What is the approximate PSA 10 population count for this trading card: '+cardQ+'?\nReturn ONLY this JSON with a real integer — do not return 0:\n{"psa10_pop":350}\nReplace 350 with the real estimated PSA 10 population for this specific card.');
 
   try {
-    var [r1,r2,r3] = await Promise.all([p1,p2,p3]);
+    var [r1,r2,r3,r4] = await Promise.all([p1,p2,p3,p4]);
     clearInterval(srchTimer);
     document.getElementById('srch-loading').classList.remove('show');
 
     var combined = {found:true};
-    [r1,r2,r3].forEach(function(txt){
+    [r1,r2,r3,r4].forEach(function(txt){
       try{
         var obj = parseJSON(txt);
         Object.keys(obj).forEach(function(k){
@@ -728,7 +729,7 @@ async function doSearch() {
           +'<div class="stat-cell"><div class="stat-label">Raw High</div><div class="stat-val c-white">$'+combined.raw_high+'</div></div>'
           +'<div class="stat-cell"><div class="stat-label">PSA 9</div><div class="stat-val c-green">$'+combined.psa9_value+'</div></div>'
           +'<div class="stat-cell"><div class="stat-label">PSA 10</div><div class="stat-val c-green">$'+combined.psa10_value+'</div></div>'
-          +'<div class="stat-cell"><div class="stat-label">PSA 10 Pop <span style="color:var(--gold);font-size:7px">EST</span></div><div class="stat-val c-purple">~'+combined.psa10_pop+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">PSA 10 Pop <span style="color:var(--gold);font-size:7px">EST</span></div><div class="stat-val '+(combined.psa10_pop>0?'c-purple':'c-gold')+'">'+( combined.psa10_pop>0?'~'+combined.psa10_pop:'—'  )+'</div></div>'
         +'</div>'
         +'<div class="pop-note"><div class="pop-note-txt">⚠️ Pop count is an estimate — verify before buying</div><a class="pop-verify" href="https://www.psacard.com/pop" target="_blank">✓ VERIFY<br>PSA POP</a></div>'
       +'</div>'
