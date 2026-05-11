@@ -471,8 +471,7 @@ var GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini
 
 // Fallback models if primary fails
 var GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-preview-05-20'
+  'gemini-2.5-flash'
 ];
 
 // ═══════════════════════════════════════════════════════════════
@@ -667,6 +666,10 @@ async function doSearch() {
     var results = await Promise.all([callGemini(numPrompt), callGemini(txtPrompt)]);
     clearInterval(srchTimer);
     document.getElementById('srch-loading').classList.remove('show');
+
+    // Log raw responses to browser console (open DevTools to see)
+    console.log('NUMS RAW:', results[0]);
+    console.log('TEXT RAW:', results[1]);
 
     function parseLines(txt) {
       var obj = {};
