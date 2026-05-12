@@ -718,7 +718,7 @@ async function doSearch() {
 
     // Text field defaults
     combined.player       = combined.player       || q;
-    combined.card_name    = combined.card_name    || '';
+    combined.card_name    = String(combined.card_name    || '');
     combined.sport        = combined.sport        || 'Unknown';
     combined.manufacturer = combined.manufacturer || '';
     combined.momentum     = ((combined.momentum    || 'stable')+'').toLowerCase();
@@ -741,7 +741,7 @@ async function doSearch() {
     var momIcon = combined.momentum==='hot'?'🔥':combined.momentum==='rising'?'📈':combined.momentum==='cooling'?'📉':'➡️';
     var momCls  = combined.momentum==='hot'?'tag-hot':combined.momentum==='rising'?'tag-rising':'tag-stable';
     var riskCls = combined.risk==='low'?'tag-low':combined.risk==='high'?'tag-high':'tag-medium';
-    var ebayQ   = encodeURIComponent(combined.player+' '+((combined.card_name||'').split(' ').slice(0,4).join(' '))+' PSA 10');
+    var ebayQ   = encodeURIComponent(combined.player+' '+String(combined.card_name||'').split(' ').slice(0,4).join(' ')+' PSA 10');
 
     var html =
       '<div class="result-card">'
