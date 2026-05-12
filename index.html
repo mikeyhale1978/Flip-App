@@ -660,11 +660,12 @@ async function doSearch() {
 
   try {
     // Two tiny calls using key=value format — never truncates, always parses
-    var numPrompt = 'Sports card price lookup tool. Card: ' + cardQ + '\nFill each blank with a number. No disclaimers, no text, just fill the blanks.\n\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=\npsa10_pop=\n\nExample: psa10_value=1500';
+    var numPrompt = 'Sports card price lookup tool. Card: ' + cardQ + '\nFill each blank with a number. No disclaimers, no text, just fill the blanks.\n\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=\n\nExample: psa10_value=1500';
 
     var txtPrompt = 'Trading card lookup tool. For: ' + cardQ + ', fill each blank with a short real value. No disclaimers, just answers.\n\nplayer=\ncard_name=\nsport=\nmanufacturer=\nmomentum=\nrisk=\ngrading_worth_it=\nwhere_to_buy=\nwhere_to_sell=\nmarket_summary=\nflip_advice=\n\nExample: player=Patrick Mahomes';
 
-    var results = await Promise.all([callGemini(numPrompt), callGemini(txtPrompt)]);
+    var popPrompt = 'PSA 10 population for: ' + cardQ + '\nOne line only:\npsa10_pop=NUMBER\nExample: psa10_pop=450';
+    var results = await Promise.all([callGemini(numPrompt), callGemini(txtPrompt), callGemini(popPrompt)]);
     clearInterval(srchTimer);
     document.getElementById('srch-loading').classList.remove('show');
 
@@ -1079,15 +1080,18 @@ function doScout() {
         +'</div>'
         +'<div class="scout-roi '+roiCls+'">+'+f.roi+'%</div>'
       +'</div>'
-      // Stats
-      +'<div class="stat-grid cols3" style="border-radius:0">'
-        +'<div class="stat-cell"><div class="stat-label">Raw Buy</div><div class="stat-val c-white">$'+c.b+'</div></div>'
-        +'<div class="stat-cell"><div class="stat-label">Graded Sale</div><div class="stat-val c-green">$'+c.g+'</div></div>'
-        +'<div class="stat-cell"><div class="stat-label">Graded Profit</div><div class="stat-val '+(f.profit>0?'c-green':'c-red')+'">$'+Math.round(f.profit)+'</div></div>'
+      // Graded flip stats
+      +'<div class="stat-grid cols3" style="border-radius:0;border-top:1px solid var(--border)">'
+        +'<div class="stat-cell"><div class="stat-label" style="color:var(--accent)">🏆 Raw Buy</div><div class="stat-val c-white">$'+c.b+'</div></div>'
+        +'<div class="stat-cell"><div class="stat-label" style="color:var(--accent)">PSA 10 Sale</div><div class="stat-val c-green">$'+c.g+'</div></div>'
+        +'<div class="stat-cell"><div class="stat-label" style="color:var(--accent)">Graded Profit</div><div class="stat-val '+(f.profit>0?'c-green':'c-red')+'">$'+Math.round(f.profit)+'</div></div>'
+        +'<div class="stat-cell"><div class="stat-label" style="color:var(--accent)">Total Cost</div><div class="stat-val c-white">$'+Math.round(f.tc)+'</div></div>'
+        +'<div class="stat-cell"><div class="stat-label" style="color:var(--accent)">Graded ROI</div><div class="stat-val '+(f.roi>=30?'c-green':f.roi>=0?'c-gold':'c-red')+'">'+(f.roi>=0?'+':'')+f.roi+'%</div></div>'
+        +'<div class="stat-cell"><div class="stat-label" style="color:var(--accent)">Multiplier</div><div class="stat-val c-purple">'+(c.b>0?parseFloat((c.g/c.b).toFixed(1)):0)+'x</div></div>'
       +'</div>'
       // Raw flip
       +'<div style="padding:6px 12px 6px">'
-        +'<div class="flip-bar-label">💰 RAW FLIP</div>'
+        +'<div class="flip-bar-label">💰 RAW FLIP (no grading)</div>'
         +'<div class="flip-bar-grid" style="border-radius:7px;overflow:hidden">'
           +'<div class="flip-cell"><div class="flip-lbl">BUY</div><div class="flip-val c-white">$'+c.b+'</div></div>'
           +'<div class="flip-cell"><div class="flip-lbl">SELL RAW</div><div class="flip-val c-gold">~$'+f.rawSell+'</div></div>'
@@ -1158,28 +1162,34 @@ function renderWatch() {
       var bl=p.pri==='hot'?'🔥 HOT':p.pri==='sleeper'?'💎 SLEEPER':'⭐ MEDIUM';
       var rc=p.roi>=100?'c-green':p.roi>=50?'c-gold':'c-white';
       var f=flipCalc(p);
-      html+='<div class="wl-card">'
-        +'<div class="wl-header" onclick="loadIntoCalc('+p.b+','+p.g+')">'
-          +'<div><div class="wl-name">'+p.n+'</div><div class="wl-set">'+p.c+'</div><span class="badge '+bc+'" style="margin-top:4px">'+bl+'</span></div>'
-          +'<div class="wl-right"><div class="wl-buy">Buy ~$'+p.b+'</div><div class="wl-roi '+rc+'">+'+p.roi+'%</div><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--muted)">if PSA 10</div></div>'
-        +'</div>'
-        +'<div class="wl-rows">'
-          +'<div class="wl-row-label" style="color:var(--accent)">🏆 GRADED FLIP</div>'
-          +'<div class="flip-bar-grid" style="border-radius:7px;overflow:hidden;margin-bottom:8px;background:rgba(0,255,170,.15)">'
-            +'<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">BUY</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--text)">$'+p.b+'</div></div>'
-            +'<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">PSA 10</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--accent)">$'+p.g+'</div></div>'
-            +'<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">PROFIT</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+(f.profit>0?'var(--accent)':'var(--red)')+'">$'+Math.round(f.profit)+'</div></div>'
-            +'<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">ROI</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+(f.roi>=30?'var(--accent)':'var(--gold)');
-      html+=(f.roi>=0?'+':'')+f.roi+'%</div></div></div>';
-      html+='<div class="wl-row-label" style="color:var(--gold)">💰 RAW FLIP</div>'
-        +'<div class="flip-bar-grid" style="border-radius:7px;overflow:hidden;background:rgba(245,197,24,.15)">'
-          +'<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">BUY</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--text)">$'+p.b+'</div></div>'
-          +'<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">SELL RAW</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--gold)">~$'+f.rawSell+'</div></div>'
-          +'<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">PROFIT</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+(f.rawProfit>0?'var(--accent)':'var(--red)')+'">$'+f.rawProfit+'</div></div>'
-          +'<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">ROI</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+(f.rawROI>=20?'var(--accent)':'var(--gold)')+'">'+(f.rawROI>=0?'+':'')+f.rawROI+'%</div></div>'
-        +'</div>'
-        +'<button class="btn-sm" style="width:100%;text-align:center;margin-top:8px;padding:8px" onclick="loadIntoCalc('+p.b+','+p.g+')">⚡ LOAD INTO CALC</button>'
-      +'</div></div>';
+      var gradedROIcol=f.roi>=30?'var(--accent)':'var(--gold)';
+      var rawROIcol=f.rawROI>=20?'var(--accent)':'var(--gold)';
+      html+='<div class="wl-card">';
+      // Header
+      html+='<div class="wl-header" onclick="loadIntoCalc('+p.b+','+p.g+')">';
+      html+='<div><div class="wl-name">'+p.n+'</div><div class="wl-set">'+p.c+'</div><span class="badge '+bc+'" style="margin-top:4px">'+bl+'</span></div>';
+      html+='<div class="wl-right"><div class="wl-buy">Buy ~$'+p.b+'</div><div class="wl-roi '+rc+'">+'+p.roi+'%</div><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--muted)">if PSA 10</div></div>';
+      html+='</div>';
+      // Rows
+      html+='<div class="wl-rows">';
+      // Graded flip
+      html+='<div class="wl-row-label" style="color:var(--accent)">🏆 GRADED FLIP</div>';
+      html+='<div class="flip-bar-grid" style="border-radius:7px;overflow:hidden;margin-bottom:8px;background:rgba(0,255,170,.15)">';
+      html+='<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">BUY</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--text)">$'+p.b+'</div></div>';
+      html+='<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">PSA 10</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--accent)">$'+p.g+'</div></div>';
+      html+='<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">PROFIT</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+(f.profit>0?'var(--accent)':'var(--red)')+'">$'+Math.round(f.profit)+'</div></div>';
+      html+='<div style="background:#0a1a12;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--accent);letter-spacing:1px;margin-bottom:2px">ROI</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+gradedROIcol+'">'+(f.roi>=0?'+':'')+f.roi+'%</div></div>';
+      html+='</div>';
+      // Raw flip
+      html+='<div class="wl-row-label" style="color:var(--gold)">💰 RAW FLIP</div>';
+      html+='<div class="flip-bar-grid" style="border-radius:7px;overflow:hidden;background:rgba(245,197,24,.15)">';
+      html+='<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">BUY</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--text)">$'+p.b+'</div></div>';
+      html+='<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">SELL RAW</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:var(--gold)">~$'+f.rawSell+'</div></div>';
+      html+='<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">PROFIT</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+(f.rawProfit>0?'var(--accent)':'var(--red)')+'">$'+f.rawProfit+'</div></div>';
+      html+='<div style="background:#14100a;padding:8px;text-align:center"><div style="font-family:\'DM Mono\',monospace;font-size:7px;color:var(--gold);letter-spacing:1px;margin-bottom:2px">ROI</div><div style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+rawROIcol+'">'+(f.rawROI>=0?'+':'')+f.rawROI+'%</div></div>';
+      html+='</div>';
+      html+='<button class="btn-sm" style="width:100%;text-align:center;margin-top:8px;padding:8px" onclick="loadIntoCalc('+p.b+','+p.g+')">⚡ LOAD INTO CALC</button>';
+      html+='</div></div>';
     });
   });
   document.getElementById('watch-list').innerHTML=html;
