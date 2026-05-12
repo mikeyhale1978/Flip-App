@@ -721,12 +721,12 @@ async function doSearch() {
     combined.card_name    = combined.card_name    || '';
     combined.sport        = combined.sport        || 'Unknown';
     combined.manufacturer = combined.manufacturer || '';
-    combined.momentum     = (combined.momentum    || 'stable').toLowerCase();
-    combined.risk         = (combined.risk        || 'medium').toLowerCase();
+    combined.momentum     = ((combined.momentum    || 'stable')+'').toLowerCase();
+    combined.risk         = ((combined.risk        || 'medium')+'').toLowerCase();
     combined.where_to_buy = combined.where_to_buy || 'eBay, card shows';
     combined.where_to_sell= combined.where_to_sell|| 'eBay';
-    combined.market_summary = combined.market_summary || 'Check eBay sold listings for current market data.';
-    combined.flip_advice  = combined.flip_advice  || 'Compare raw vs graded prices carefully before buying.';
+    combined.market_summary = (combined.market_summary || 'Check eBay sold listings for current market data.')+'';
+    combined.flip_advice  = (combined.flip_advice  || 'Compare raw vs graded prices carefully before buying.')+'';
     combined.psa10_pop_note = 'estimate only — verify at psacard.com/pop';
     combined.grading_worth_it = combined.grading_worth_it !== false;
 
@@ -741,7 +741,7 @@ async function doSearch() {
     var momIcon = combined.momentum==='hot'?'🔥':combined.momentum==='rising'?'📈':combined.momentum==='cooling'?'📉':'➡️';
     var momCls  = combined.momentum==='hot'?'tag-hot':combined.momentum==='rising'?'tag-rising':'tag-stable';
     var riskCls = combined.risk==='low'?'tag-low':combined.risk==='high'?'tag-high':'tag-medium';
-    var ebayQ   = encodeURIComponent(combined.player+' '+combined.card_name.split(' ').slice(0,4).join(' ')+' PSA 10');
+    var ebayQ   = encodeURIComponent(combined.player+' '+((combined.card_name||'').split(' ').slice(0,4).join(' '))+' PSA 10');
 
     var html =
       '<div class="result-card">'
