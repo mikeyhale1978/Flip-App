@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>FLIP — Card Profit Tool</title>
+<title>FLIP — Card Profit Tool v2.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <style>
 /* ── PASTE YOUR GEMINI API KEY ON LINE 1 OF THE SCRIPT BELOW ── */
@@ -719,7 +719,9 @@ async function doSearch() {
 
     // Text field defaults
     combined.player       = combined.player       || q;
-    combined.card_name    = String(combined.card_name    || '');
+    // Force card_name to string no matter what
+    var rawCN = combined.card_name || combined.set || combined.card || '';
+    combined.card_name = (typeof rawCN === 'number') ? String(rawCN) : (rawCN + '');
     combined.sport        = combined.sport        || 'Unknown';
     combined.manufacturer = combined.manufacturer || '';
     combined.momentum     = ((combined.momentum    || 'stable')+'').toLowerCase();
@@ -749,7 +751,7 @@ async function doSearch() {
       // ── Header ──
       +'<div class="result-header">'
         +'<div class="result-name">'+combined.player+'</div>'
-        +'<div class="result-set">'+combined.card_name+'</div>'
+        +'<div class="result-set">'+(combined.card_name||'')+'</div>'
         +'<div class="result-tags">'
           +'<span class="tag">'+combined.sport+'</span>'
           +'<span class="tag '+momCls+'">'+momIcon+' '+combined.momentum.toUpperCase()+'</span>'
