@@ -742,7 +742,7 @@ async function doSearch() {
     var momIcon = combined.momentum==='hot'?'🔥':combined.momentum==='rising'?'📈':combined.momentum==='cooling'?'📉':'➡️';
     var momCls  = combined.momentum==='hot'?'tag-hot':combined.momentum==='rising'?'tag-rising':'tag-stable';
     var riskCls = combined.risk==='low'?'tag-low':combined.risk==='high'?'tag-high':'tag-medium';
-    var ebayQ   = encodeURIComponent(combined.player+' '+String(combined.card_name||'').split(' ').slice(0,4).join(' ')+' PSA 10');
+    var ebayQ = encodeURIComponent(combined.player + ' PSA 10');
 
     var html =
       '<div class="result-card">'
