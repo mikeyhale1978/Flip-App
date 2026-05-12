@@ -681,11 +681,12 @@ async function doSearch() {
         var k = line.slice(0, eq).trim().replace(/\s+/g, '_').replace(/[^a-z0-9_]/gi, '');
         var v = line.slice(eq + 1).trim().replace(/[*_`"]/g, '');
         if (!k || !v || v === '') return;
+        // Only convert to number if the ENTIRE value is numeric (no letters)
         var num = parseFloat(v);
-        if (!isNaN(num) && num > 0) obj[k] = num;
+        if (!isNaN(num) && num > 0 && !/[a-zA-Z]/.test(v)) obj[k] = num;
         else if (v.toLowerCase() === 'true') obj[k] = true;
         else if (v.toLowerCase() === 'false') obj[k] = false;
-        else obj[k] = v;
+        else obj[k] = v;  // always store as string if it contains letters
       });
       return obj;
     }
