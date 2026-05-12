@@ -659,7 +659,7 @@ async function doSearch() {
 
   try {
     // Two tiny calls using key=value format — never truncates, always parses
-    var numPrompt = 'You are a sports card price lookup tool. For the card: ' + cardQ + ', fill in each blank with a number based on recent eBay sold listings. No disclaimers, no explanations, just the numbers.\n\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\npsa10_pop=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=\n\nFill every = with a realistic number. Example: psa10_value=1500';
+    var numPrompt = 'Sports card price lookup tool. Card: ' + cardQ + '\nFill each blank with a number. No disclaimers, no text, just fill the blanks.\n\npsa10_value=\npsa9_value=\nraw_avg=\nraw_low=\nraw_high=\nraw_flip_sell=\nraw_flip_roi=\ngraded_flip_roi=\npsa10_multiplier=\npsa10_pop=\n\nExample: psa10_value=1500';
 
     var txtPrompt = 'Trading card lookup tool. For: ' + cardQ + ', fill each blank with a short real value. No disclaimers, just answers.\n\nplayer=\ncard_name=\nsport=\nmanufacturer=\nmomentum=\nrisk=\ngrading_worth_it=\nwhere_to_buy=\nwhere_to_sell=\nmarket_summary=\nflip_advice=\n\nExample: player=Patrick Mahomes';
 
@@ -699,6 +699,117 @@ async function doSearch() {
         else if (typeof v !== 'number' && !combined[k]) combined[k] = v;
       });
     });
+
+    // Force all numeric fields to numbers
+    function n(v,def){var x=parseFloat(v);return(!isNaN(x)&&x>0)?x:(def||0);}
+    combined.psa10_value    = n(combined.psa10_value);
+    combined.psa9_value     = n(combined.psa9_value);
+    combined.raw_avg        = n(combined.raw_avg);
+    combined.raw_low        = n(combined.raw_low);
+    combined.raw_high       = n(combined.raw_high);
+    combined.psa10_pop      = n(combined.psa10_pop);
+
+    // Calculate flip fields from price data if Gemini didn't return them
+    var fee = 0.129;
+    combined.raw_flip_sell    = n(combined.raw_flip_sell) || Math.round(combined.raw_avg * 1.35);
+    combined.raw_flip_roi     = n(combined.raw_flip_roi)  || (combined.raw_avg > 0 ? Math.round((combined.raw_flip_sell*(1-fee)-0.30-combined.raw_avg)/combined.raw_avg*100) : 0);
+    combined.graded_flip_roi  = n(combined.graded_flip_roi) || (combined.raw_avg > 0 ? Math.round((combined.psa10_value*(1-fee)-0.30-combined.raw_avg-25-4)/(combined.raw_avg+25+4)*100) : 0);
+    combined.psa10_multiplier = n(combined.psa10_multiplier) || (combined.raw_avg > 0 ? parseFloat((combined.psa10_value/combined.raw_avg).toFixed(1)) : 0);
+
+    // Text field defaults
+    combined.player       = combined.player       || q;
+    combined.card_name    = combined.card_name    || '';
+    combined.sport        = combined.sport        || 'Unknown';
+    combined.manufacturer = combined.manufacturer || '';
+    combined.momentum     = (combined.momentum    || 'stable').toLowerCase();
+    combined.risk         = (combined.risk        || 'medium').toLowerCase();
+    combined.where_to_buy = combined.where_to_buy || 'eBay, card shows';
+    combined.where_to_sell= combined.where_to_sell|| 'eBay';
+    combined.market_summary = combined.market_summary || 'Check eBay sold listings for current market data.';
+    combined.flip_advice  = combined.flip_advice  || 'Compare raw vs graded prices carefully before buying.';
+    combined.psa10_pop_note = 'estimate only — verify at psacard.com/pop';
+    combined.grading_worth_it = combined.grading_worth_it !== false;
+
+    // Derived display values
+    var buyGreat   = Math.round(combined.raw_avg * 0.70);
+    var buyGood    = Math.round(combined.raw_avg * 0.85);
+    var gradedCost = combined.raw_avg + 25 + 4;
+    var gradedNet  = combined.psa10_value * (1-fee) - 0.30;
+    var gradedProfit = Math.round(gradedNet - gradedCost);
+    var rawFlipProfit = Math.round(combined.raw_flip_sell*(1-fee)-0.30 - combined.raw_low);
+
+    var momIcon = combined.momentum==='hot'?'🔥':combined.momentum==='rising'?'📈':combined.momentum==='cooling'?'📉':'➡️';
+    var momCls  = combined.momentum==='hot'?'tag-hot':combined.momentum==='rising'?'tag-rising':'tag-stable';
+    var riskCls = combined.risk==='low'?'tag-low':combined.risk==='high'?'tag-high':'tag-medium';
+    var ebayQ   = encodeURIComponent(combined.player+' '+combined.card_name.split(' ').slice(0,4).join(' ')+' PSA 10');
+
+    var html =
+      '<div class="result-card">'
+      // ── Header ──
+      +'<div class="result-header">'
+        +'<div class="result-name">'+combined.player+'</div>'
+        +'<div class="result-set">'+combined.card_name+'</div>'
+        +'<div class="result-tags">'
+          +'<span class="tag">'+combined.sport+'</span>'
+          +'<span class="tag '+momCls+'">'+momIcon+' '+combined.momentum.toUpperCase()+'</span>'
+          +'<span class="tag '+riskCls+'">● '+combined.risk.toUpperCase()+' RISK</span>'
+          +(combined.grading_worth_it?'<span class="tag tag-rising">✅ GRADE IT</span>':'<span class="tag tag-stable">⏭ SKIP GRADING</span>')
+        +'</div>'
+      +'</div>'
+      // ── Buy Guide ──
+      +'<div style="padding:14px 14px 0">'
+        +'<div class="panel-title">🛒 PURCHASE PRICE GUIDE</div>'
+        +'<div class="buy-guide">'
+          +'<div class="buy-tier bt-green"><div class="buy-emoji">🎯</div><div class="buy-label" style="color:var(--accent)">GREAT DEAL</div><div class="buy-price" style="color:var(--accent)">$'+buyGreat+'</div><div class="buy-hint">or under — buy it</div></div>'
+          +'<div class="buy-tier bt-gold"><div class="buy-emoji">👍</div><div class="buy-label" style="color:var(--gold)">GOOD PRICE</div><div class="buy-price" style="color:var(--gold)">$'+buyGood+'</div><div class="buy-hint">solid margin</div></div>'
+          +'<div class="buy-tier bt-red"><div class="buy-emoji">⚠️</div><div class="buy-label" style="color:var(--red)">MAX PAY</div><div class="buy-price" style="color:var(--red)">$'+combined.raw_avg+'</div><div class="buy-hint">avg — negotiate hard</div></div>'
+        +'</div>'
+      +'</div>'
+      // ── Market Prices ──
+      +'<div style="padding:0 14px 14px">'
+        +'<div class="panel-title" style="margin-top:12px">📊 MARKET PRICES</div>'
+        +'<div class="stat-grid cols3" style="margin-bottom:8px">'
+          +'<div class="stat-cell"><div class="stat-label">Raw Low</div><div class="stat-val c-white">$'+combined.raw_low+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Raw Avg</div><div class="stat-val c-gold">$'+combined.raw_avg+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Raw High</div><div class="stat-val c-white">$'+combined.raw_high+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">PSA 9</div><div class="stat-val c-green">$'+combined.psa9_value+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">PSA 10</div><div class="stat-val c-green">$'+combined.psa10_value+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">PSA 10 Pop <span style="color:var(--gold);font-size:7px">EST</span></div><div class="stat-val '+(combined.psa10_pop>0?'c-purple':'c-gold')+'">'+(combined.psa10_pop>0?'~'+combined.psa10_pop:'—')+'</div></div>'
+        +'</div>'
+        +'<div class="pop-note"><div class="pop-note-txt">⚠️ Pop count is an estimate — always verify before buying</div><a class="pop-verify" href="https://www.psacard.com/pop" target="_blank">✓ VERIFY<br>PSA POP</a></div>'
+      +'</div>'
+      // ── Raw Flip ──
+      +'<div style="padding:0 14px 14px">'
+        +'<div class="flip-bar-label">💰 RAW FLIP (buy &amp; sell ungraded)</div>'
+        +'<div class="flip-bar-grid" style="border-radius:8px;overflow:hidden">'
+          +'<div class="flip-cell"><div class="flip-lbl">BUY TARGET</div><div class="flip-val c-white">$'+combined.raw_low+'</div></div>'
+          +'<div class="flip-cell"><div class="flip-lbl">SELL RAW</div><div class="flip-val c-gold">~$'+combined.raw_flip_sell+'</div></div>'
+          +'<div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val '+(rawFlipProfit>0?'c-green':'c-red')+'">$'+rawFlipProfit+'</div></div>'
+          +'<div class="flip-cell"><div class="flip-lbl">RAW ROI</div><div class="flip-val '+(combined.raw_flip_roi>=20?'c-green':'c-gold')+'">'+(combined.raw_flip_roi>=0?'+':'')+combined.raw_flip_roi+'%</div></div>'
+        +'</div>'
+      +'</div>'
+      // ── Graded Flip ──
+      +'<div style="padding:0 14px 14px">'
+        +'<div class="flip-bar-label" style="color:var(--accent)">🏆 GRADED FLIP (buy raw → PSA 10)</div>'
+        +'<div class="stat-grid cols3" style="margin-bottom:8px">'
+          +'<div class="stat-cell"><div class="stat-label">Buy Raw</div><div class="stat-val c-white">$'+combined.raw_avg+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Grading</div><div class="stat-val" style="color:#ff6b35">$25</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">PSA 10 Sale</div><div class="stat-val c-green">$'+combined.psa10_value+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Net Profit</div><div class="stat-val '+(gradedProfit>0?'c-green':'c-red')+'">'+(gradedProfit>0?'+':'')+gradedProfit+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Graded ROI</div><div class="stat-val '+(combined.graded_flip_roi>=30?'c-green':combined.graded_flip_roi>=0?'c-gold':'c-red')+'">'+(combined.graded_flip_roi>=0?'+':'')+combined.graded_flip_roi+'%</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Multiplier</div><div class="stat-val c-purple">'+combined.psa10_multiplier+'x</div></div>'
+        +'</div>'
+        +'<div class="advice-box">'+combined.market_summary+'<br><br><strong style="color:var(--accent)">Flip Advice:</strong> '+combined.flip_advice+'</div>'
+      +'</div>'
+      // ── Actions ──
+      +'<div style="padding:0 14px 14px;display:flex;gap:8px">'
+        +'<button class="btn btn-green" style="flex:1;margin:0;font-size:14px;padding:10px" onclick="loadIntoCalc('+combined.raw_avg+','+combined.psa10_value+')">⚡ LOAD INTO CALC</button>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="display:flex;align-items:center">🔍 EBAY</a>'
+        +'<a href="https://130point.com" target="_blank" class="btn-sm" style="display:flex;align-items:center">📊 COMPS</a>'
+      +'</div>'
+    +'</div>';
+
+    document.getElementById('srch-results').innerHTML = html;
 
   } catch(err) {
     clearInterval(srchTimer);
