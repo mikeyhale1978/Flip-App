@@ -814,7 +814,7 @@ async function doSearch() {
       // ── Actions ──
       +'<div style="display:flex;gap:5px;padding:0 14px 14px">'
         +'<button class="btn btn-green" style="flex:1;margin:0;font-size:13px;padding:10px" onclick="loadIntoCalc('+combined.raw_avg+','+combined.psa10_value+')">⚡ CALC</button>'
-        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(combined.player+' raw')+'" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">🛒 BUY NOW</a>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(combined.player+' raw')+'&_sacat=261328" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">🛒 BUY NOW</a>'
         +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">🔍 SOLD</a>'
         +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(combined.player+' '+String(combined.card_name||''))+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">📊 COMPS</a>'
       +'</div>'
@@ -1107,7 +1107,7 @@ function doScout() {
       +'<div style="padding:6px 14px 10px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border)">'+c.w+'</div>'
       +'<div style="display:flex;gap:5px;padding:0 12px 10px">'
         +'<button class="btn-sm" style="flex:1;text-align:center" onclick="loadIntoCalc('+c.b+','+c.g+')">⚡ CALC</button>'
-        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(c.n+' '+c.c.split(' ').slice(0,3).join(' ')+' raw')+'" target="_blank" class="btn-sm" style="flex:1;text-align:center">🛒 BUY NOW</a>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(c.n+' '+c.c.split(' ').slice(0,3).join(' ')+' raw')+'&_sacat=261328" target="_blank" class="btn-sm" style="flex:1;text-align:center">🛒 BUY NOW</a>'
         +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🔍 SOLD</a>'
         +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">📊 COMPS</a>'
       +'</div>'
@@ -1198,7 +1198,7 @@ function renderWatch() {
       var wlEbayBuy = encodeURIComponent(p.n+' '+p.c.split(' ').slice(0,4).join(' ')+' raw');
       var wl130  = encodeURIComponent(p.n+' '+p.c.split(' ').slice(0,3).join(' '));
       html+='<div style="display:flex;gap:5px;margin-top:6px">';
-      html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbayBuy+'" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">🛒 BUY NOW</a>';
+      html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbayBuy+'&_sacat=261328" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">🛒 BUY NOW</a>';
       html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbay+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">🔍 SOLD</a>';
       html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbay+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">📊 COMPS</a>';
       html+='</div>';
