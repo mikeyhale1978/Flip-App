@@ -772,6 +772,7 @@ async function doSearch() {
           +'<div class="buy-tier bt-gold"><div class="buy-emoji">👍</div><div class="buy-label" style="color:var(--gold)">GOOD PRICE</div><div class="buy-price" style="color:var(--gold)">$'+buyGood+'</div><div class="buy-hint">solid margin</div></div>'
           +'<div class="buy-tier bt-red"><div class="buy-emoji">⚠️</div><div class="buy-label" style="color:var(--red)">MAX PAY</div><div class="buy-price" style="color:var(--red)">$'+combined.raw_avg+'</div><div class="buy-hint">avg — negotiate hard</div></div>'
         +'</div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);line-height:1.6;padding:0 0 10px">💡 <strong style="color:var(--text)">These are TARGET prices</strong> — what to aim for at card shows, in lots, or patient eBay watching. Use <strong style="color:var(--gold)">💰 LOW SALES</strong> to see the cheapest recent sold prices.</div>'
       +'</div>'
       // ── Market Prices ──
       +'<div style="padding:0 14px 14px">'
@@ -812,7 +813,7 @@ async function doSearch() {
       // ── Actions ──
       +'<div style="display:flex;gap:5px;padding:0 14px 14px">'
         +'<button class="btn btn-green" style="flex:1;margin:0;font-size:13px;padding:10px" onclick="loadIntoCalc('+combined.raw_avg+','+combined.psa10_value+')">⚡ CALC</button>'
-        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(combined.player+' raw')+'&LH_BIN=1&_sop=15" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">🛒 BUY</a>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(combined.player+' raw')+'&LH_Sold=1&LH_Complete=1&_sop=15" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">💰 LOW SALES</a>'
         +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">🔍 SOLD</a>'
         +'<a href="https://www.130point.com/sales/'+encodeURIComponent(combined.player)+'" target="_blank" class="btn-sm" style="display:flex;align-items:center;padding:10px">📊 COMPS</a>'
       +'</div>'
@@ -1105,7 +1106,7 @@ function doScout() {
       +'<div style="padding:6px 14px 10px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border)">'+c.w+'</div>'
       +'<div style="display:flex;gap:5px;padding:0 12px 10px">'
         +'<button class="btn-sm" style="flex:1;text-align:center" onclick="loadIntoCalc('+c.b+','+c.g+')">⚡ CALC</button>'
-        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(c.n+' '+c.c.split(' ').slice(0,3).join(' ')+' raw')+'&LH_BIN=1&_sop=15" target="_blank" class="btn-sm" style="flex:1;text-align:center">🛒 BUY</a>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(c.n+' '+c.c.split(' ').slice(0,3).join(' ')+' raw')+'&LH_Sold=1&LH_Complete=1&_sop=15" target="_blank" class="btn-sm" style="flex:1;text-align:center">💰 LOW SALES</a>'
         +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🔍 SOLD</a>'
         +'<a href="https://www.130point.com/sales/'+encodeURIComponent(c.n+' '+c.c.split(' ').slice(0,3).join(' '))+'" target="_blank" class="btn-sm" style="flex:1;text-align:center">📊 COMPS</a>'
       +'</div>'
@@ -1196,7 +1197,7 @@ function renderWatch() {
       var wlEbayBuy = encodeURIComponent(p.n+' '+p.c.split(' ').slice(0,4).join(' ')+' raw');
       var wl130  = encodeURIComponent(p.n+' '+p.c.split(' ').slice(0,3).join(' '));
       html+='<div style="display:flex;gap:5px;margin-top:6px">';
-      html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbayBuy+'&LH_BIN=1&_sop=15" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">🛒 BUY</a>';
+      html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbayBuy+'&LH_Sold=1&LH_Complete=1&_sop=15" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">💰 LOW SALES</a>';
       html+='<a href="https://www.ebay.com/sch/i.html?_nkw='+wlEbay+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">🔍 SOLD</a>';
       html+='<a href="https://www.130point.com/sales/'+wl130+'" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:7px;font-size:8px">📊 COMPS</a>';
       html+='</div>';
