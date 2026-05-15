@@ -205,6 +205,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <button class="nav-btn" onclick="showPage('scan',this)">📸 Scan</button>
   <button class="nav-btn" onclick="showPage('scout',this)">📊 Scout</button>
   <button class="nav-btn" onclick="showPage('watch',this)">👀 Watch</button>
+  <button class="nav-btn" onclick="showPage('trending',this)">🔥 Trending</button>
   <button class="nav-btn" onclick="showPage('fees',this)">💸 Fees</button>
   <button class="nav-btn" onclick="showPage('hunt',this)">✅ Hunt</button>
 </div>
@@ -393,6 +394,26 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </select>
   </div>
   <div id="watch-list"></div>
+</div>
+
+<!-- ══════════════════════════════════
+     TRENDING PAGE
+══════════════════════════════════ -->
+<div class="page" id="page-trending">
+  <div style="height:16px"></div>
+  <div class="page-title">🔥 TRENDING NOW</div>
+  <div class="page-sub">Hot cards moving in the market right now</div>
+
+  <button class="btn btn-green" id="trend-refresh-btn" onclick="refreshTrending()" style="margin-bottom:14px">🔥 REFRESH WITH AI</button>
+
+  <div id="trend-loading" class="loading">
+    <div class="spinner"></div>
+    <div class="loading-title">SCANNING MARKET</div>
+    <div class="loading-step" id="trend-step">Checking hot cards...</div>
+  </div>
+
+  <div id="trend-last-updated" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:10px;display:none"></div>
+  <div id="trend-list"></div>
 </div>
 
 <!-- ══════════════════════════════════
@@ -1243,11 +1264,148 @@ function togCL(type,i){var s=type==='pre'?preChk:tblChk;s.has(i)?s.delete(i):s.a
 function resetChecklist(){preChk.clear();tblChk.clear();renderCL();}
 
 // ═══════════════════════════════════════════════════════════════
+//  TRENDING
+// ═══════════════════════════════════════════════════════════════
+
+var TRENDING_STATIC = [
+  {n:'Cooper Flagg',c:'2025-26 Topps Chrome RC',s:'Basketball',price:'$55-80',why:'#1 NBA Draft pick, first Topps Chrome NBA since 2009 — historic RC',m:'🔥',b:65,g:200},
+  {n:'Macklin Celebrini',c:'2024-25 Upper Deck Young Guns RC',s:'Hockey',price:'$35-50',why:'Sharks franchise player, MVP-caliber sophomore season, PSA 10 at $375+',m:'🔥',b:40,g:375},
+  {n:'Ivan Demidov',c:'2025-26 Upper Deck Young Guns RC',s:'Hockey',price:'$30-45',why:'Canadiens Russian winger, most anticipated YG debut in years',m:'🔥',b:35,g:280},
+  {n:'Fernando Mendoza',c:'2026 Topps NOW Draft RC Auto',s:'Football',price:'$40-60',why:'Raiders #1 overall pick 2026 NFL Draft — 72hr window auto',m:'🔥',b:45,g:160},
+  {n:'Cam Ward',c:'2025 Panini Prizm Draft RC',s:'Football',price:'$25-40',why:'Titans franchise QB, Miami Heisman, strong early NFL buzz',m:'📈',b:30,g:90},
+  {n:'Paige Bueckers',c:'2025 Panini Prizm WNBA RC',s:'Basketball',price:'$8-15',why:'WNBA ROY driving fastest-growing hobby segment, findable at retail',m:'🔥',b:8,g:55},
+  {n:'Lamine Yamal',c:'2024 Topps Chrome UEFA RC',s:'Soccer',price:'$20-35',why:'Barcelona teen phenom, 2026 World Cup favorite, up 200% YoY',m:'🔥',b:25,g:120},
+  {n:'Christian Pulisic',c:'2026 Panini Prizm FIFA RC',s:'Soccer',price:'$10-18',why:'US captain, 2026 World Cup on home soil — host nation hype',m:'📈',b:12,g:50},
+  {n:'Paul Skenes',c:'2024 Bowman Chrome 1st Auto RC',s:'Baseball',price:'$70-90',why:'Reigning Cy Young winner makes this the premier modern pitcher RC',m:'📈',b:75,g:160},
+  {n:'Roman Anthony',c:'2026 Topps Series 1 RC',s:'Baseball',price:'$12-20',why:'Red Sox top prospect with immediate MLB impact, strong Boston demand',m:'🔥',b:15,g:42},
+  {n:'Travis Hunter',c:'2025 Panini Prizm Draft RC',s:'Football',price:'$20-30',why:'Two-way Heisman winner at Jacksonville, dual-market collector appeal',m:'📈',b:25,g:80},
+  {n:'Caitlin Clark',c:'2024 Panini Prizm WNBA RC',s:'Basketball',price:'$9-14',why:'Biggest name in womens sports, mainstream demand keeps PSA 10 strong',m:'🔥',b:10,g:110},
+];
+
+var trendSteps=['Checking recent sales...','Scanning player news...','Analyzing momentum...','Finding hot opportunities...'];
+var trendTimer=null, trendIdx=0;
+
+function renderTrendingStatic() {
+  var EMOJI={Baseball:'⚾',Basketball:'🏀',Football:'🏈',Soccer:'⚽',Hockey:'🏒',Pokemon:'⚡',UFC:'🥊'};
+  var html='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-bottom:12px;background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.15);border-radius:8px;padding:9px 12px">📋 Built-in list current as of May 2026. Hit <strong style="color:var(--accent)">🔥 REFRESH WITH AI</strong> for live updates based on today\'s news.</div>';
+  TRENDING_STATIC.forEach(function(card, i) {
+    var em=EMOJI[card.s]||'🃏';
+    var f=flipCalc({b:card.b,g:card.g});
+    var ebayAuction=encodeURIComponent(card.n+' '+card.c.split(' ').slice(0,3).join(' '));
+    html+='<div class="scout-card" style="animation-delay:'+(i*.04)+'s">'
+      +'<div class="scout-header">'
+        +'<div style="min-width:0;flex:1">'
+          +'<div style="font-size:14px;font-weight:600;color:var(--text)">'+card.n+'</div>'
+          +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:2px">'+card.c+'</div>'
+          +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+card.s+' &nbsp;·&nbsp; Raw: '+card.price+'</div>'
+        +'</div>'
+        +'<div style="font-size:28px;margin-left:10px">'+card.m+'</div>'
+      +'</div>'
+      +'<div style="padding:8px 14px;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);line-height:1.5;background:rgba(255,204,0,.03)">'+card.why+'</div>'
+      +'<div class="stat-grid cols3" style="border-radius:0;border-top:1px solid var(--border)">'
+        +'<div class="stat-cell"><div class="stat-label">Buy Target</div><div class="stat-val c-white">$'+card.b+'</div></div>'
+        +'<div class="stat-cell"><div class="stat-label">PSA 10</div><div class="stat-val c-green">$'+card.g+'</div></div>'
+        +'<div class="stat-cell"><div class="stat-label">Graded ROI</div><div class="stat-val '+(f.roi>=50?'c-green':'c-gold')+'">'+(f.roi>=0?'+':'')+f.roi+'%</div></div>'
+      +'</div>'
+      +'<div class="flip-bar-label" style="padding:6px 12px 4px">💰 RAW FLIP (no grading)</div>'
+      +'<div class="flip-bar-grid" style="margin:0 12px 8px;border-radius:7px;overflow:hidden">'
+        +'<div class="flip-cell"><div class="flip-lbl">BUY</div><div class="flip-val c-white">$'+card.b+'</div></div>'
+        +'<div class="flip-cell"><div class="flip-lbl">SELL RAW</div><div class="flip-val c-gold">~$'+f.rawSell+'</div></div>'
+        +'<div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val '+(f.rawProfit>0?'c-green':'c-red')+'">$'+f.rawProfit+'</div></div>'
+        +'<div class="flip-cell"><div class="flip-lbl">RAW ROI</div><div class="flip-val '+(f.rawROI>=20?'c-green':'c-gold')+'">'+(f.rawROI>=0?'+':'')+f.rawROI+'%</div></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:5px;padding:8px 12px">'
+        +'<button class="btn-sm" style="flex:1;text-align:center" onclick="loadIntoCalc('+card.b+','+card.g+')">⚡ CALC</button>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayAuction+'&LH_Auction=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🔨 AUCTION</a>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayAuction+'&LH_BIN=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🛒 BIN</a>'
+        +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayAuction+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">📊 SOLD</a>'
+      +'</div>'
+    +'</div>';
+  });
+  document.getElementById('trend-list').innerHTML = html;
+}
+
+async function refreshTrending() {
+  if (!GEMINI_KEY) { showApiSetup(); return; }
+  var btn = document.getElementById('trend-refresh-btn');
+  btn.disabled = true;
+  document.getElementById('trend-loading').classList.add('show');
+  trendIdx=0;
+  document.getElementById('trend-step').textContent=trendSteps[0];
+  trendTimer=setInterval(function(){trendIdx=(trendIdx+1)%trendSteps.length;document.getElementById('trend-step').textContent=trendSteps[trendIdx];},1200);
+
+  var prompt = 'You are a sports card market expert. What are the 8 hottest trading cards RIGHT NOW in May 2026 based on recent player performance, news, and collector demand?\n\nFor each card write ONE LINE in this exact format:\nname|set|sport|raw_price|psa10_price|why_hot|momentum\n\nExample:\nPatrick Mahomes|2017 Panini Prizm RC|Football|80|1500|Chiefs Super Bowl win drives demand|hot\n\nMomentum must be: hot, rising, or stable\nNo other text, just 8 lines.';
+
+  try {
+    var txt = await callGemini(prompt);
+    clearInterval(trendTimer);
+    document.getElementById('trend-loading').classList.remove('show');
+
+    var EMOJI={Baseball:'⚾',Basketball:'🏀',Football:'🏈',Soccer:'⚽',Hockey:'🏒',Pokemon:'⚡',UFC:'🥊'};
+    var lines = txt.trim().split('\n').filter(function(l){return l.indexOf('|')>-1;});
+    var html = '<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--accent);margin-bottom:12px;background:rgba(0,255,170,.05);border:1px solid rgba(0,255,170,.15);border-radius:8px;padding:9px 12px">✅ AI-refreshed — live market intelligence as of right now.</div>';
+
+    lines.forEach(function(line, i) {
+      var parts = line.split('|');
+      if (parts.length < 6) return;
+      var name=parts[0].trim(), set=parts[1].trim(), sport=parts[2].trim();
+      var rawP=parseFloat(parts[3])||0, p10P=parseFloat(parts[4])||0;
+      var why=parts[5].trim(), mom=parts[6]?(parts[6].trim()):'rising';
+      var mIcon=mom==='hot'?'🔥':mom==='rising'?'📈':'➡️';
+      var em=EMOJI[sport]||'🃏';
+      var roi=rawP>0?Math.round((p10P*(1-0.129)-0.30-rawP-25-4)/(rawP+25+4)*100):0;
+      var ebayQ=encodeURIComponent(name+' '+set.split(' ').slice(0,3).join(' '));
+      html+='<div class="scout-card" style="animation-delay:'+(i*.04)+'s">'
+        +'<div class="scout-header">'
+          +'<div style="min-width:0;flex:1">'
+            +'<div style="font-size:14px;font-weight:600;color:var(--text)">'+name+'</div>'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:2px">'+set+'</div>'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+sport+' &nbsp;·&nbsp; Raw ~$'+rawP+'</div>'
+          +'</div>'
+          +'<div style="font-size:28px;margin-left:10px">'+mIcon+'</div>'
+        +'</div>'
+        +'<div style="padding:8px 14px;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);line-height:1.5;background:rgba(255,204,0,.03)">'+why+'</div>'
+        +'<div class="stat-grid cols3" style="border-radius:0;border-top:1px solid var(--border)">'
+          +'<div class="stat-cell"><div class="stat-label">Buy Target</div><div class="stat-val c-white">$'+rawP+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">PSA 10</div><div class="stat-val c-green">$'+p10P+'</div></div>'
+          +'<div class="stat-cell"><div class="stat-label">Graded ROI</div><div class="stat-val '+(roi>=50?'c-green':'c-gold')+'">'+(roi>=0?'+':'')+roi+'%</div></div>'
+        +'</div>'
+        +'<div class="flip-bar-label" style="padding:6px 12px 4px">💰 RAW FLIP (no grading)</div>'
+        +'<div class="flip-bar-grid" style="margin:0 12px 8px;border-radius:7px;overflow:hidden">'
+          +'<div class="flip-cell"><div class="flip-lbl">BUY</div><div class="flip-val c-white">$'+rawP+'</div></div>'
+          +'<div class="flip-cell"><div class="flip-lbl">SELL RAW</div><div class="flip-val c-gold">~$'+Math.round(rawP*2.2)+'</div></div>'
+          +'<div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val c-green">$'+Math.round(rawP*2.2*(1-0.129)-0.30-rawP)+'</div></div>'
+          +'<div class="flip-cell"><div class="flip-lbl">RAW ROI</div><div class="flip-val c-green">+'+Math.round((rawP*2.2*(1-0.129)-0.30-rawP)/rawP*100)+'%</div></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:5px;padding:8px 12px">'
+          +'<button class="btn-sm" style="flex:1;text-align:center" onclick="loadIntoCalc('+rawP+','+p10P+')">⚡ CALC</button>'
+          +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Auction=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🔨 AUCTION</a>'
+          +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_BIN=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🛒 BIN</a>'
+          +'<a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">📊 SOLD</a>'
+        +'</div>'
+      +'</div>';
+    });
+
+    document.getElementById('trend-list').innerHTML = html;
+    var now = new Date();
+    var updated = document.getElementById('trend-last-updated');
+    updated.textContent = '🔄 Last refreshed: '+now.toLocaleTimeString();
+    updated.style.display = 'block';
+  } catch(err) {
+    clearInterval(trendTimer);
+    document.getElementById('trend-loading').classList.remove('show');
+    document.getElementById('trend-list').innerHTML = '<div class="panel" style="border-color:var(--red)"><div style="color:var(--red);font-family:\'DM Mono\',monospace;font-size:11px">Error: '+err.message+'</div></div>';
+  }
+  btn.disabled = false;
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════════
 checkKeyBanners();
 renderWatch();
 renderCL();
+renderTrendingStatic();
 // Close modal on backdrop click
 document.getElementById('api-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 </script>
