@@ -404,7 +404,21 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="page-title">🔥 TRENDING NOW</div>
   <div class="page-sub">Hot cards moving in the market right now</div>
 
-  <button class="btn btn-green" id="trend-refresh-btn" onclick="refreshTrending()" style="margin-bottom:14px">🔥 REFRESH WITH AI</button>
+  <button class="btn btn-green" id="trend-refresh-btn" onclick="refreshTrending()" style="margin-bottom:10px">🔥 REFRESH WITH AI</button>
+
+  <div class="field" style="margin-bottom:14px">
+    <label class="il">Filter by Sport</label>
+    <select onchange="filterTrending(this.value)">
+      <option value="all">🌍 All Sports & Categories</option>
+      <option value="Baseball">⚾ Baseball</option>
+      <option value="Basketball">🏀 Basketball</option>
+      <option value="Football">🏈 Football</option>
+      <option value="Soccer">⚽ Soccer / FIFA</option>
+      <option value="Hockey">🏒 Hockey</option>
+      <option value="Pokemon">⚡ Pokémon</option>
+      <option value="UFC">🥊 UFC</option>
+    </select>
+  </div>
 
   <div id="trend-loading" class="loading">
     <div class="spinner"></div>
@@ -1268,27 +1282,86 @@ function resetChecklist(){preChk.clear();tblChk.clear();renderCL();}
 // ═══════════════════════════════════════════════════════════════
 
 var TRENDING_STATIC = [
-  {n:'Cooper Flagg',c:'2025-26 Topps Chrome RC',s:'Basketball',price:'$55-80',why:'#1 NBA Draft pick, first Topps Chrome NBA since 2009 — historic RC',m:'🔥',b:65,g:200},
-  {n:'Macklin Celebrini',c:'2024-25 Upper Deck Young Guns RC',s:'Hockey',price:'$35-50',why:'Sharks franchise player, MVP-caliber sophomore season, PSA 10 at $375+',m:'🔥',b:40,g:375},
-  {n:'Ivan Demidov',c:'2025-26 Upper Deck Young Guns RC',s:'Hockey',price:'$30-45',why:'Canadiens Russian winger, most anticipated YG debut in years',m:'🔥',b:35,g:280},
-  {n:'Fernando Mendoza',c:'2026 Topps NOW Draft RC Auto',s:'Football',price:'$40-60',why:'Raiders #1 overall pick 2026 NFL Draft — 72hr window auto',m:'🔥',b:45,g:160},
-  {n:'Cam Ward',c:'2025 Panini Prizm Draft RC',s:'Football',price:'$25-40',why:'Titans franchise QB, Miami Heisman, strong early NFL buzz',m:'📈',b:30,g:90},
-  {n:'Paige Bueckers',c:'2025 Panini Prizm WNBA RC',s:'Basketball',price:'$8-15',why:'WNBA ROY driving fastest-growing hobby segment, findable at retail',m:'🔥',b:8,g:55},
-  {n:'Lamine Yamal',c:'2024 Topps Chrome UEFA RC',s:'Soccer',price:'$20-35',why:'Barcelona teen phenom, 2026 World Cup favorite, up 200% YoY',m:'🔥',b:25,g:120},
-  {n:'Christian Pulisic',c:'2026 Panini Prizm FIFA RC',s:'Soccer',price:'$10-18',why:'US captain, 2026 World Cup on home soil — host nation hype',m:'📈',b:12,g:50},
-  {n:'Paul Skenes',c:'2024 Bowman Chrome 1st Auto RC',s:'Baseball',price:'$70-90',why:'Reigning Cy Young winner makes this the premier modern pitcher RC',m:'📈',b:75,g:160},
-  {n:'Roman Anthony',c:'2026 Topps Series 1 RC',s:'Baseball',price:'$12-20',why:'Red Sox top prospect with immediate MLB impact, strong Boston demand',m:'🔥',b:15,g:42},
-  {n:'Travis Hunter',c:'2025 Panini Prizm Draft RC',s:'Football',price:'$20-30',why:'Two-way Heisman winner at Jacksonville, dual-market collector appeal',m:'📈',b:25,g:80},
-  {n:'Caitlin Clark',c:'2024 Panini Prizm WNBA RC',s:'Basketball',price:'$9-14',why:'Biggest name in womens sports, mainstream demand keeps PSA 10 strong',m:'🔥',b:10,g:110},
+  {n:'Cooper Flagg',c:'2025-26 Topps Chrome RC',s:'Basketball',price:'$55-80',why:'First Topps Chrome NBA RC since 2009 — historic set makes this a must-own modern basketball RC',tag:'🌟 ROOKIE',m:'🔥',b:65,g:200},
+  {n:'Macklin Celebrini',c:'2024-25 Upper Deck Young Guns RC',s:'Hockey',price:'$35-50',why:'MVP-caliber sophomore season, PSA 10 pop only 85 — scarcity driving price to $375+',tag:'📈 MOMENTUM',m:'🔥',b:40,g:375},
+  {n:'Ivan Demidov',c:'2025-26 Upper Deck Young Guns RC',s:'Hockey',price:'$30-45',why:'Most anticipated Young Guns debut in years — Canadiens Russian winger with generational skill',tag:'🌟 ROOKIE',m:'🔥',b:35,g:280},
+  {n:'Fernando Mendoza',c:'2026 Topps NOW Draft RC Auto',s:'Football',price:'$40-60',why:'#1 overall pick 2026 NFL Draft — Topps NOW autos available 72hr only, limited supply',tag:'🎯 EVENT',m:'🔥',b:45,g:160},
+  {n:'Cam Ward',c:'2025 Panini Prizm Draft RC',s:'Football',price:'$25-40',why:'Titans franchise QB with Miami Heisman pedigree, strong early NFL buzz and camp performance',tag:'🌟 ROOKIE',m:'📈',b:30,g:90},
+  {n:'Paige Bueckers',c:'2025 Panini Prizm WNBA RC',s:'Basketball',price:'$8-15',why:'WNBA Rookie of the Year driving fastest-growing hobby segment — still findable at retail',tag:'🌟 ROOKIE',m:'🔥',b:8,g:55},
+  {n:'Lamine Yamal',c:'2024 Topps Chrome UEFA RC',s:'Soccer',price:'$20-35',why:'Barcelona teen phenom, 2026 World Cup on home soil — up 200% YoY with more room to run',tag:'🎯 EVENT',m:'🔥',b:25,g:120},
+  {n:'Christian Pulisic',c:'2026 Panini Prizm FIFA RC',s:'Soccer',price:'$10-18',why:'US captain playing World Cup on home soil — host nation hype drives massive domestic demand',tag:'🎯 EVENT',m:'📈',b:12,g:50},
+  {n:'Paul Skenes',c:'2024 Bowman Chrome 1st Auto RC',s:'Baseball',price:'$70-90',why:'Reigning Cy Young winner at age 22 — premier modern pitcher RC with elite upside',tag:'🏆 PERFORMANCE',m:'📈',b:75,g:160},
+  {n:'Roman Anthony',c:'2026 Topps Series 1 RC',s:'Baseball',price:'$12-20',why:'Red Sox top prospect making immediate MLB impact — strong Boston market drives demand',tag:'🌟 ROOKIE',m:'🔥',b:15,g:42},
+  {n:'Travis Hunter',c:'2025 Panini Prizm Draft RC',s:'Football',price:'$20-30',why:'Two-way Heisman winner — dual WR/CB appeal creates two separate collector markets',tag:'🌟 ROOKIE',m:'📈',b:25,g:80},
+  {n:'Caitlin Clark',c:'2024 Panini Prizm WNBA RC',s:'Basketball',price:'$9-14',why:'Biggest name in womens sports — mainstream crossover demand keeps PSA 10 consistently strong',tag:'📈 MOMENTUM',m:'🔥',b:10,g:110},
 ];
 
 var trendSteps=['Checking recent sales...','Scanning player news...','Analyzing momentum...','Finding hot opportunities...'];
 var trendTimer=null, trendIdx=0;
 
+var trendFilter = 'all';
+var trendAICards = null; // stores last AI result for re-filtering
+
+function filterTrending(sport) {
+  trendFilter = sport;
+  if (trendAICards) {
+    renderTrendingAI(trendAICards);
+  } else {
+    renderTrendingStatic();
+  }
+}
+
+function renderTrendingAI(lines) {
+  var EMOJI={Baseball:'⚾',Basketball:'🏀',Football:'🏈',Soccer:'⚽',Hockey:'🏒',Pokemon:'⚡',UFC:'🥊'};
+  var filtered = trendFilter==='all' ? lines : lines.filter(function(l){
+    var parts=l.split('|'); return parts[2] && parts[2].trim()===trendFilter;
+  });
+  if (!filtered.length) {
+    document.getElementById('trend-list').innerHTML='<div class="empty">No AI results in this category.<br>Try All Sports or hit Refresh again.</div>';
+    return;
+  }
+  var html='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--accent);margin-bottom:12px;background:rgba(0,255,170,.05);border:1px solid rgba(0,255,170,.15);border-radius:8px;padding:9px 12px">✅ AI-refreshed — showing '+filtered.length+' cards'+(trendFilter!=='all'?' in '+trendFilter:'')+'.</div>';
+  filtered.forEach(function(line, i) {
+    var parts=line.split('|');
+    if(parts.length<6) return;
+    var name=parts[0].trim(),set=parts[1].trim(),sport=parts[2].trim();
+    var rawP=parseFloat(parts[3])||0,p10P=parseFloat(parts[4])||0;
+    var whyRaw=parts[5].trim(),mom=parts[6]?parts[6].trim():'rising';
+    var criteriaTag='',why=whyRaw;
+    if(whyRaw.indexOf(':')>-1){var sp2=whyRaw.split(':');var crit=sp2[0].trim().toUpperCase();why=sp2.slice(1).join(':').trim();var tagMap={'PERFORMANCE':'🏆 PERFORMANCE','ROOKIE':'🌟 ROOKIE','RECORD':'📊 RECORD','EVENT':'🎯 EVENT','SCARCITY':'💎 SCARCITY','MOMENTUM':'📈 MOMENTUM'};criteriaTag=tagMap[crit]||crit;}
+    var mIcon=mom==='hot'?'🔥':mom==='rising'?'📈':'➡️';
+    var em=EMOJI[sport]||'🃏';
+    var roi=rawP>0?Math.round((p10P*(1-0.129)-0.30-rawP-25-4)/(rawP+25+4)*100):0;
+    var rawSell=Math.round(rawP*2.2),rawProfit=Math.round(rawSell*(1-0.129)-0.30-rawP),rawROI=rawP>0?Math.round((rawProfit/rawP)*100):0;
+    var ebayQ=encodeURIComponent(name+' '+set.split(' ').slice(0,3).join(' '));
+    html+='<div class="scout-card">'
+      +'<div class="scout-header"><div style="min-width:0;flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+name+'</div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:2px">'+set+'</div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+sport+' &nbsp;·&nbsp; Raw ~$'+rawP+(criteriaTag?'&nbsp;&nbsp;<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;padding:1px 6px">'+criteriaTag+'</span>':'')+'</div></div><div style="font-size:28px;margin-left:10px">'+mIcon+'</div></div>'
+      +'<div style="padding:8px 14px;border-top:1px solid var(--border);font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);line-height:1.5;background:rgba(255,204,0,.03)">'+why+'</div>'
+      +'<div class="stat-grid cols3" style="border-radius:0;border-top:1px solid var(--border)"><div class="stat-cell"><div class="stat-label">Buy Target</div><div class="stat-val c-white">$'+rawP+'</div></div><div class="stat-cell"><div class="stat-label">PSA 10</div><div class="stat-val c-green">$'+p10P+'</div></div><div class="stat-cell"><div class="stat-label">Graded ROI</div><div class="stat-val '+(roi>=50?'c-green':'c-gold')+'">'+(roi>=0?'+':'')+roi+'%</div></div></div>'
+      +'<div class="flip-bar-label" style="padding:6px 12px 4px">💰 RAW FLIP</div>'
+      +'<div class="flip-bar-grid" style="margin:0 12px 8px;border-radius:7px;overflow:hidden"><div class="flip-cell"><div class="flip-lbl">BUY</div><div class="flip-val c-white">$'+rawP+'</div></div><div class="flip-cell"><div class="flip-lbl">SELL RAW</div><div class="flip-val c-gold">~$'+rawSell+'</div></div><div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val c-green">$'+rawProfit+'</div></div><div class="flip-cell"><div class="flip-lbl">RAW ROI</div><div class="flip-val c-green">+'+rawROI+'%</div></div></div>'
+      +'<div style="display:flex;gap:5px;padding:8px 12px"><button class="btn-sm" style="flex:1;text-align:center" onclick="loadIntoCalc('+rawP+','+p10P+')">⚡ CALC</button><a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Auction=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🔨 AUCTION</a><a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_BIN=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">🛒 BIN</a><a href="https://www.ebay.com/sch/i.html?_nkw='+ebayQ+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center">📊 SOLD</a></div>'
+    +'</div>';
+  });
+  document.getElementById('trend-list').innerHTML=html;
+}
+
 function renderTrendingStatic() {
   var EMOJI={Baseball:'⚾',Basketball:'🏀',Football:'🏈',Soccer:'⚽',Hockey:'🏒',Pokemon:'⚡',UFC:'🥊'};
-  var html='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-bottom:12px;background:rgba(255,68,85,.06);border:1px solid rgba(255,68,85,.15);border-radius:8px;padding:9px 12px">📋 Built-in list current as of May 2026. Hit <strong style="color:var(--accent)">🔥 REFRESH WITH AI</strong> for live updates based on today\'s news.</div>';
-  TRENDING_STATIC.forEach(function(card, i) {
+  var html='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-bottom:12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:10px 12px;line-height:1.7">'
+    +'<strong style="color:var(--text)">📋 How cards make this list:</strong><br>'
+    +'🏆 <strong style="color:var(--accent)">PERFORMANCE</strong> — championship, MVP, major award<br>'
+    +'🌟 <strong style="color:var(--gold)">ROOKIE</strong> — first-year player with immediate impact<br>'
+    +'📈 <strong style="color:var(--purple)">MOMENTUM</strong> — price up 20%+ in last 30 days<br>'
+    +'🎯 <strong style="color:#ff6b35">EVENT</strong> — World Cup, playoffs, upcoming draft<br>'
+    +'<span style="color:var(--muted)">Hit <strong style="color:var(--accent)">🔥 REFRESH WITH AI</strong> for live updates based on today\'s news.</span>'
+    +'</div>';
+  var cards = trendFilter==='all' ? TRENDING_STATIC : TRENDING_STATIC.filter(function(c){return c.s===trendFilter;});
+  if (!cards.length) {
+    document.getElementById('trend-list').innerHTML='<div class="empty">No trending cards in this category.<br>Hit 🔥 Refresh with AI for live data.</div>';
+    return;
+  }
+  cards.forEach(function(card, i) {
     var em=EMOJI[card.s]||'🃏';
     var f=flipCalc({b:card.b,g:card.g});
     var ebayAuction=encodeURIComponent(card.n+' '+card.c.split(' ').slice(0,3).join(' '));
@@ -1297,7 +1370,7 @@ function renderTrendingStatic() {
         +'<div style="min-width:0;flex:1">'
           +'<div style="font-size:14px;font-weight:600;color:var(--text)">'+card.n+'</div>'
           +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:2px">'+card.c+'</div>'
-          +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+card.s+' &nbsp;·&nbsp; Raw: '+card.price+'</div>'
+          +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+card.s+' &nbsp;·&nbsp; Raw: '+card.price+'&nbsp;&nbsp;<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;padding:1px 6px">'+card.tag+'</span></div>'
         +'</div>'
         +'<div style="font-size:28px;margin-left:10px">'+card.m+'</div>'
       +'</div>'
@@ -1334,7 +1407,7 @@ async function refreshTrending() {
   document.getElementById('trend-step').textContent=trendSteps[0];
   trendTimer=setInterval(function(){trendIdx=(trendIdx+1)%trendSteps.length;document.getElementById('trend-step').textContent=trendSteps[trendIdx];},1200);
 
-  var prompt = 'You are a sports card market expert. What are the 8 hottest trading cards RIGHT NOW in May 2026 based on recent player performance, news, and collector demand?\n\nFor each card write ONE LINE in this exact format:\nname|set|sport|raw_price|psa10_price|why_hot|momentum\n\nExample:\nPatrick Mahomes|2017 Panini Prizm RC|Football|80|1500|Chiefs Super Bowl win drives demand|hot\n\nMomentum must be: hot, rising, or stable\nNo other text, just 8 lines.';
+  var prompt = 'You are a sports card market analyst. List the 15 hottest trading cards RIGHT NOW in May 2026 across all sports and categories including Baseball, Basketball, Football, Soccer, Hockey, Pokemon, and UFC.\n\nA card qualifies as HOT if it meets one or more of these criteria:\n1. PERFORMANCE — player just won a championship, MVP, Cy Young, Hart Trophy, Heisman etc\n2. ROOKIE — first-year player with immediate impact or high draft pick\n3. RECORD — player broke a statistical record recently\n4. EVENT — upcoming major event like World Cup, playoffs, draft\n5. SCARCITY — low PSA 10 pop driving price spikes\n6. MOMENTUM — card price increased 20%+ in last 30 days\n\nFor each card write ONE LINE in this exact format:\nname|set|sport|raw_price|psa10_price|criteria:reason|momentum\n\nExample:\nPatrick Mahomes|2017 Panini Prizm RC|Football|80|1500|PERFORMANCE:4x Super Bowl champion|hot\n\nMomentum: hot, rising, or stable\nNo other text. Just 15 lines, spread across multiple sports.';
 
   try {
     var txt = await callGemini(prompt);
@@ -1350,7 +1423,16 @@ async function refreshTrending() {
       if (parts.length < 6) return;
       var name=parts[0].trim(), set=parts[1].trim(), sport=parts[2].trim();
       var rawP=parseFloat(parts[3])||0, p10P=parseFloat(parts[4])||0;
-      var why=parts[5].trim(), mom=parts[6]?(parts[6].trim()):'rising';
+      var whyRaw=parts[5].trim(), mom=parts[6]?(parts[6].trim()):'rising';
+      // Parse criteria:reason format
+      var criteriaTag='', why=whyRaw;
+      if (whyRaw.indexOf(':')>-1) {
+        var split=whyRaw.split(':');
+        var crit=split[0].trim().toUpperCase();
+        why=split.slice(1).join(':').trim();
+        var tagMap={'PERFORMANCE':'🏆 PERFORMANCE','ROOKIE':'🌟 ROOKIE','RECORD':'📊 RECORD','EVENT':'🎯 EVENT','SCARCITY':'💎 SCARCITY','MOMENTUM':'📈 MOMENTUM'};
+        criteriaTag=tagMap[crit]||crit;
+      }
       var mIcon=mom==='hot'?'🔥':mom==='rising'?'📈':'➡️';
       var em=EMOJI[sport]||'🃏';
       var roi=rawP>0?Math.round((p10P*(1-0.129)-0.30-rawP-25-4)/(rawP+25+4)*100):0;
@@ -1360,7 +1442,7 @@ async function refreshTrending() {
           +'<div style="min-width:0;flex:1">'
             +'<div style="font-size:14px;font-weight:600;color:var(--text)">'+name+'</div>'
             +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:2px">'+set+'</div>'
-            +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+sport+' &nbsp;·&nbsp; Raw ~$'+rawP+'</div>'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+em+' '+sport+' &nbsp;·&nbsp; Raw ~$'+rawP+(criteriaTag?'&nbsp;&nbsp;<span style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;padding:1px 6px">'+criteriaTag+'</span>':'')+'</div>'
           +'</div>'
           +'<div style="font-size:28px;margin-left:10px">'+mIcon+'</div>'
         +'</div>'
@@ -1386,6 +1468,7 @@ async function refreshTrending() {
       +'</div>';
     });
 
+    trendAICards = lines;
     document.getElementById('trend-list').innerHTML = html;
     var now = new Date();
     var updated = document.getElementById('trend-last-updated');
