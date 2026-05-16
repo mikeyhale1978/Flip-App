@@ -1032,11 +1032,14 @@ async function doScan() {
     }
 
     var flat = {};
+    var debugLog = '';
     results.forEach(function(txt){
-      console.log('SCAN RAW:', txt.slice(0,300));
+      debugLog += 'RAW:\n' + txt.slice(0,400) + '\n\n';
       Object.assign(flat, parseScanLines(txt));
     });
-    console.log('SCAN PARSED:', JSON.stringify(flat).slice(0,300));
+    debugLog += 'PARSED:\n' + JSON.stringify(flat).slice(0,400);
+    // Show debug on screen temporarily
+    document.getElementById('scan-results').innerHTML = '<div class="panel" style="border-color:var(--gold)"><div style="font-family:monospace;font-size:10px;color:var(--gold);white-space:pre-wrap;word-break:break-all">'+debugLog+'</div></div>';
 
     // Build r object matching what renderCamResults expects
     var r = {
