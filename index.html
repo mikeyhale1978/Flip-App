@@ -999,7 +999,7 @@ async function doScan() {
   scanTimer=setInterval(function(){scanIdx=(scanIdx+1)%scanSteps.length;document.getElementById('scan-step').textContent=scanSteps[scanIdx];},1300);
 
   // Two parallel calls - grading analysis + market values
-  var gradePrompt = 'You are an expert card grader. Analyze this trading card image.\nFill each blank with a real value. No other text.\n\nidentified=true\nplayer=\ncard_name=\nsport=\nmanufacturer=\nyear=\ngrade_estimate=\ngrade_confidence=\npsa10_probability=\nbiggest_issue=\ngrading_recommendation=\ngrading_advice=\nflip_worthy=\nmarket_notes=\ncentering_score=\ncentering_status=\ncentering_lr=\ncentering_tb=\ncentering_detail=\ncorners_score=\ncorners_status=\ncorners_detail=\nedges_score=\nedges_status=\nedges_detail=\nsurface_score=\nsurface_status=\nsurface_detail=\n\nIf cannot identify card: identified=false and reason=explanation';
+  var gradePrompt = 'You are an expert card grader. Analyze this trading card image carefully.\nFill every blank below with a real assessment. No other text.\n\nidentified=true\nplayer=full name here\ncard_name=year and set name here\nsport=Baseball or Basketball or Football or Soccer or Hockey or Pokemon or Other\nmanufacturer=brand name here\nyear=year here\ngrade_estimate=number 1 to 10\ngrade_confidence=percent 1 to 100\npsa10_probability=percent 0 to 100\nbiggest_issue=describe main defect or write NONE\ngrading_recommendation=SUBMIT or HOLD or SKIP\ngrading_advice=one sentence of grading advice\nflip_worthy=true or false\nmarket_notes=one sentence about market demand\ncentering_score=number 1 to 10\ncentering_status=PASS or WARN or FAIL\ncentering_lr=left/right ratio like 55/45\ncentering_tb=top/bottom ratio like 50/50\ncentering_detail=describe what you see with centering\ncorners_score=number 1 to 10\ncorners_status=PASS or WARN or FAIL\ncorners_detail=describe what you see at the corners\nedges_score=number 1 to 10\nedges_status=PASS or WARN or FAIL\nedges_detail=describe what you see on the edges\nsurface_score=number 1 to 10\nsurface_status=PASS or WARN or FAIL\nsurface_detail=describe scratches holo condition print quality\n\nIf card cannot be identified write: identified=false and reason=why';
 
   var valuePrompt = 'You are a card price expert. Look at this trading card image and estimate values.\nFill each blank with a number. No other text.\n\nraw_est_value=\npsa10_est_value=';
 
@@ -1032,7 +1032,11 @@ async function doScan() {
     }
 
     var flat = {};
-    results.forEach(function(txt){ Object.assign(flat, parseScanLines(txt)); });
+    results.forEach(function(txt){
+      console.log('SCAN RAW:', txt.slice(0,300));
+      Object.assign(flat, parseScanLines(txt));
+    });
+    console.log('SCAN PARSED:', JSON.stringify(flat).slice(0,300));
 
     // Build r object matching what renderCamResults expects
     var r = {
