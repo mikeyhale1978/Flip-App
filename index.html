@@ -322,8 +322,15 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <img id="cam-preview" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px"/>
     <div id="cam-overlay" style="display:none;position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:10px;border-radius:0 0 10px 10px;font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.7)">tap to retake</div>
   </div>
-  <input type="file" id="cam-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)"/>
-  <button class="btn btn-green" id="scan-btn" onclick="doScan()" disabled style="margin-bottom:8px">🔍 ANALYZE CARD</button>
+  <input type="file" id="cam-input" accept="image/*" style="display:none" onchange="handlePhoto(event)"/>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="btn btn-green" id="scan-btn" onclick="doScan()" disabled style="flex:1;margin:0;font-size:16px">🔍 ANALYZE CARD</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="btn-sm" style="flex:1;text-align:center;padding:10px" onclick="document.getElementById('cam-input').click()">📷 TAKE PHOTO</button>
+    <button class="btn-sm" style="flex:1;text-align:center;padding:10px" onclick="document.getElementById('gal-input').click()">🖼️ FROM GALLERY</button>
+  </div>
+  <input type="file" id="gal-input" accept="image/*" style="display:none" onchange="handlePhoto(event)"/>
   <button class="btn-sm" style="width:100%;text-align:center;padding:10px" onclick="resetScan()">↺ Clear & Start Over</button>
 
   <div id="scan-loading" class="loading" style="margin-top:14px">
@@ -1018,8 +1025,20 @@ async function doScan() {
     function parseScanLines(txt) {
       var obj = {};
       if (!txt) return obj;
-      txt.split('\n').forEach(function(line) {
+      // Join continuation lines (lines without = that follow a field)
+      var lines = txt.split('\n');
+      var joined = [];
+      lines.forEach(function(line) {
         line = line.trim().replace(/^[-*•]\s*/,'');
+        if (!line) return;
+        if (line.indexOf('=') > 0) {
+          joined.push(line);
+        } else if (joined.length > 0) {
+          // Continuation of previous line - append to it
+          joined[joined.length-1] += ' ' + line;
+        }
+      });
+      joined.forEach(function(line) {
         var eq = line.indexOf('=');
         if (eq < 1) return;
         var k = line.slice(0,eq).trim().replace(/[^a-z0-9_]/gi,'');
