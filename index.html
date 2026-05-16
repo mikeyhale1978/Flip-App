@@ -1006,14 +1006,21 @@ async function doScan() {
   scanTimer=setInterval(function(){scanIdx=(scanIdx+1)%scanSteps.length;document.getElementById('scan-step').textContent=scanSteps[scanIdx];},1300);
 
   // Three small parallel calls - each tiny so never truncates
-  var gradePrompt = 'Expert card grader. Analyze this card image and fill in every blank with your real assessment.\n\nidentified=true\nplayer=Full Player Name\ncard_name=Year Set Name\nsport=Football\nmanufacturer=Panini\ngrade_estimate=8\ngrade_confidence=75\npsa10_probability=35\ngrading_recommendation=SUBMIT\ngrading_advice=Worth submitting based on condition.\nbiggest_issue=NONE\nflip_worthy=true\nmarket_notes=Strong demand from collectors.\nraw_est_value=25\npsa10_est_value=90\ncentering_score=8\ncentering_status=PASS\ncentering_lr=52/48\ncentering_tb=50/50\ncentering_detail=Borders appear even on all sides.\ncorners_score=9\ncorners_status=PASS\ncorners_detail=Corners are sharp with no visible wear.\nedges_score=8\nedges_status=PASS\nedges_detail=Edges are clean with no chipping.\nsurface_score=9\nsurface_status=PASS\nsurface_detail=Surface is clean with no scratches.\n\nReplace EVERY value above with your real assessment of this specific card. All fields required.';
+  // Call 1: Card ID + grade + values (short response)
+  var gradePrompt = 'Analyze this card. Fill in blanks with real values:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=\nadvice=\nissue=\nworthy=\nnotes=\nrawvalue=\npsa10value=';
+  // Call 2: Defect analysis only (short response)  
+  var defectPrompt = 'Grade the condition of this card. Fill in blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=\ncor_score=\ncor_status=\ncor_notes=\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
 
   var defectPrompt = 'Expert card grader. Examine this card image for defects and fill in every blank.\n\ncentering_score=8\ncentering_status=PASS\ncentering_lr=52/48\ncentering_tb=50/50\ncentering_detail=Borders appear even on all sides.\ncorners_score=9\ncorners_status=PASS\ncorners_detail=Corners are sharp with no visible wear.\nedges_score=8\nedges_status=PASS\nedges_detail=Edges are clean with no chipping.\nsurface_score=9\nsurface_status=PASS\nsurface_detail=Surface is clean with no scratches.\n\nReplace every value with your real assessment. Use PASS WARN or FAIL for status fields.';
 
   var valuePrompt = 'Card price expert. Look at this card and estimate current eBay market values.\n\nraw_est_value=25\npsa10_est_value=90\n\nReplace numbers with realistic dollar amounts for this specific card.';
 
   try {
-    var scanTxt = await callGemini(gradePrompt, camB64, camType);
+    var scanResults = await Promise.all([
+      callGemini(gradePrompt, camB64, camType),
+      callGemini(defectPrompt, camB64, camType)
+    ]);
+    var scanTxt = scanResults[0] + '\n' + scanResults[1];
     clearInterval(scanTimer);
     document.getElementById('scan-loading').classList.remove('show');
 
@@ -1068,26 +1075,26 @@ async function doScan() {
       market_notes:   flat.market_notes||flat.notes || 'Check eBay sold listings for current market data.',
       reason:         flat.reason || '',
       centering: {
-        score:  parseFloat(flat.centering_score||flat.cen_score||7)||7,
-        status: flat.centering_status||flat.cen_status || 'WARN',
-        left_right_estimate: flat.centering_lr||flat.cen_lr||flat.lr || '?/?',
-        top_bottom_estimate: flat.centering_tb||flat.cen_tb||flat.tb || '?/?',
-        detail: flat.centering_detail||flat.cen_detail || 'Could not assess'
+        score:  parseFloat(flat.cen_score||flat.centering_score||7)||7,
+        status: flat.cen_status||flat.centering_status || 'WARN',
+        left_right_estimate: flat.cen_lr||flat.centering_lr || '?/?',
+        top_bottom_estimate: flat.cen_tb||flat.centering_tb || '?/?',
+        detail: flat.cen_notes||flat.cen_detail||flat.centering_detail || 'Could not assess'
       },
       corners: {
-        score:  parseFloat(flat.corners_score||flat.cor_score||7)||7,
-        status: flat.corners_status||flat.cor_status || 'WARN',
-        detail: flat.corners_detail||flat.cor_detail || 'Could not assess'
+        score:  parseFloat(flat.cor_score||flat.corners_score||7)||7,
+        status: flat.cor_status||flat.corners_status || 'WARN',
+        detail: flat.cor_notes||flat.cor_detail||flat.corners_detail || 'Could not assess'
       },
       edges: {
-        score:  parseFloat(flat.edges_score||flat.edg_score||7)||7,
-        status: flat.edges_status||flat.edg_status || 'WARN',
-        detail: flat.edges_detail||flat.edg_detail || 'Could not assess'
+        score:  parseFloat(flat.edg_score||flat.edges_score||7)||7,
+        status: flat.edg_status||flat.edges_status || 'WARN',
+        detail: flat.edg_notes||flat.edg_detail||flat.edges_detail || 'Could not assess'
       },
       surface: {
-        score:  parseFloat(flat.surface_score||flat.sur_score||7)||7,
-        status: flat.surface_status||flat.sur_status || 'WARN',
-        detail: flat.surface_detail||flat.sur_detail || 'Could not assess'
+        score:  parseFloat(flat.sur_score||flat.surface_score||7)||7,
+        status: flat.sur_status||flat.surface_status || 'WARN',
+        detail: flat.sur_notes||flat.sur_detail||flat.surface_detail || 'Could not assess'
       },
     };
 
