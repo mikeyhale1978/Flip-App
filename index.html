@@ -925,17 +925,78 @@ async function doScan() {
   scanIdx=0;document.getElementById('scan-step').textContent=scanSteps[0];
   scanTimer=setInterval(function(){scanIdx=(scanIdx+1)%scanSteps.length;document.getElementById('scan-step').textContent=scanSteps[scanIdx];},1300);
 
-  var prompt = 'You are an expert card grader. Analyze this trading card image.\nReturn ONLY valid JSON:\n{"identified":true,"player":"NAME","card_name":"YEAR SET","sport":"SPORT","manufacturer":"BRAND","grade_estimate":8,"grade_confidence":75,"psa10_probability":35,"centering":{"score":8,"status":"PASS","lr":"52/48","tb":"50/50","detail":"even borders"},"corners":{"score":9,"status":"PASS","detail":"sharp corners"},"edges":{"score":8,"status":"PASS","detail":"clean edges"},"surface":{"score":9,"status":"PASS","detail":"no scratches"},"biggest_issue":"NONE","grading_recommendation":"SUBMIT","grading_advice":"Worth submitting.","raw_est_value":20,"psa10_est_value":90,"flip_worthy":true,"market_notes":"Strong demand."}\nIf unidentifiable: {"identified":false,"reason":"explanation"}';
+  // Two parallel calls - grading analysis + market values
+  var gradePrompt = 'You are an expert card grader. Analyze this trading card image.\nFill each blank with a real value. No other text.\n\nidentified=true\nplayer=\ncard_name=\nsport=\nmanufacturer=\nyear=\ngrade_estimate=\ngrade_confidence=\npsa10_probability=\nbiggest_issue=\ngrading_recommendation=\ngrading_advice=\nflip_worthy=\nmarket_notes=\ncentering_score=\ncentering_status=\ncentering_lr=\ncentering_tb=\ncentering_detail=\ncorners_score=\ncorners_status=\ncorners_detail=\nedges_score=\nedges_status=\nedges_detail=\nsurface_score=\nsurface_status=\nsurface_detail=\n\nIf cannot identify card: identified=false and reason=explanation';
+
+  var valuePrompt = 'You are a card price expert. Look at this trading card image and estimate values.\nFill each blank with a number. No other text.\n\nraw_est_value=\npsa10_est_value=';
 
   try {
-    var txt = await callGemini(prompt, camB64, camType);
+    var results = await Promise.all([
+      callGemini(gradePrompt, camB64, camType),
+      callGemini(valuePrompt, camB64, camType)
+    ]);
     clearInterval(scanTimer);
     document.getElementById('scan-loading').classList.remove('show');
-    var r = parseJSON(txt);
+
+    // Parse both responses using key=value format
+    function parseScanLines(txt) {
+      var obj = {};
+      if (!txt) return obj;
+      txt.split('\n').forEach(function(line) {
+        line = line.trim().replace(/^[-*•]\s*/,'');
+        var eq = line.indexOf('=');
+        if (eq < 1) return;
+        var k = line.slice(0,eq).trim().replace(/[^a-z0-9_]/gi,'');
+        var v = line.slice(eq+1).trim().replace(/[*_`"]/g,'');
+        if (!k || v === '') return;
+        var num = parseFloat(v);
+        if (!isNaN(num) && !/[a-zA-Z]/.test(v)) obj[k] = num;
+        else if (v.toLowerCase()==='true') obj[k] = true;
+        else if (v.toLowerCase()==='false') obj[k] = false;
+        else obj[k] = v;
+      });
+      return obj;
+    }
+
+    var flat = {};
+    results.forEach(function(txt){ Object.assign(flat, parseScanLines(txt)); });
+
+    // Build r object matching what renderCamResults expects
+    var r = {
+      identified: flat.identified !== false,
+      player:     flat.player     || 'Unknown Card',
+      card_name:  String(flat.card_name || flat.card || ''),
+      sport:      flat.sport       || 'Unknown',
+      year:       String(flat.year || ''),
+      manufacturer: flat.manufacturer || '',
+      grade_estimate:    flat.grade_estimate    || 6,
+      grade_confidence:  flat.grade_confidence  || 50,
+      psa10_probability: flat.psa10_probability || 20,
+      biggest_issue:     flat.biggest_issue     || 'NONE',
+      grading_recommendation: flat.grading_recommendation || 'HOLD',
+      grading_advice: flat.grading_advice || 'Take a clearer photo for better analysis.',
+      raw_est_value:  parseFloat(flat.raw_est_value)  || 0,
+      psa10_est_value:parseFloat(flat.psa10_est_value)|| 0,
+      flip_worthy:    flat.flip_worthy !== false,
+      market_notes:   flat.market_notes || 'Check eBay sold listings for current market data.',
+      reason:         flat.reason || '',
+      centering: {
+        score:  flat.centering_score  || 7,
+        status: flat.centering_status || 'WARN',
+        left_right_estimate: flat.centering_lr || '?/?',
+        top_bottom_estimate: flat.centering_tb || '?/?',
+        detail: flat.centering_detail || 'Could not assess'
+      },
+      corners: { score: flat.corners_score||7, status: flat.corners_status||'WARN', detail: flat.corners_detail||'Could not assess' },
+      edges:   { score: flat.edges_score||7,   status: flat.edges_status||'WARN',   detail: flat.edges_detail||'Could not assess' },
+      surface: { score: flat.surface_score||7, status: flat.surface_status||'WARN', detail: flat.surface_detail||'Could not assess' },
+    };
+
     if (!r.identified) {
       document.getElementById('scan-results').innerHTML = '<div class="panel" style="border-color:var(--red)"><div style="color:var(--red);font-family:\'DM Mono\',monospace;font-size:12px">Card not identified: '+(r.reason||'Try a clearer photo with good lighting.')+'</div></div>';
       btn.disabled=false; return;
     }
+    renderCamResults(r);
     // Defaults
     r.grade_estimate=r.grade_estimate||6; r.grade_confidence=r.grade_confidence||50;
     r.psa10_probability=r.psa10_probability||20;
