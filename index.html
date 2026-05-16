@@ -322,7 +322,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <img id="cam-preview" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px"/>
     <div id="cam-overlay" style="display:none;position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:10px;border-radius:0 0 10px 10px;font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.7)">tap to retake</div>
   </div>
-  <input type="file" id="cam-input" accept="image/*" style="display:none" onchange="handlePhoto(event)"/>
+  <input type="file" id="cam-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)"/>
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <button class="btn btn-green" id="scan-btn" onclick="doScan()" disabled style="flex:1;margin:0;font-size:16px">🔍 ANALYZE CARD</button>
   </div>
