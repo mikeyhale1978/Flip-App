@@ -1058,7 +1058,7 @@ async function doScan() {
 
     // Build r object matching what renderCamResults expects
     var r = {
-      identified: flat.identified !== false,
+      identified: flat.identified !== false && flat.identified !== 'no',
       player:     flat.player     || 'Unknown Card',
       card_name:  String(flat.card_name || flat.card || ''),
       sport:      flat.sport       || 'Unknown',
@@ -1072,7 +1072,7 @@ async function doScan() {
       grading_advice: flat.grading_advice || 'Take a clearer photo for better analysis.',
       raw_est_value:  parseFloat(flat.raw_est_value)  || 0,
       psa10_est_value:parseFloat(flat.psa10_est_value)|| 0,
-      flip_worthy:    flat.flip_worthy !== false,
+      flip_worthy:    flat.flip_worthy !== false && flat.flip_worthy !== 'no',
       market_notes:   flat.market_notes || 'Check eBay sold listings for current market data.',
       reason:         flat.reason || '',
       centering: {
@@ -1092,6 +1092,11 @@ async function doScan() {
       btn.disabled=false; return;
     }
     renderCamResults(r);
+    // Temp debug - show raw parsed fields
+    var dbg = document.createElement('div');
+    dbg.style='background:#1a1a00;border:1px solid var(--gold);border-radius:8px;padding:12px;margin-top:10px;font-family:monospace;font-size:10px;color:var(--gold);white-space:pre-wrap;word-break:break-all';
+    dbg.textContent = 'PARSED FIELDS:\n'+JSON.stringify(flat,null,1).slice(0,800);
+    document.getElementById('scan-results').appendChild(dbg);
     // Defaults
     r.grade_estimate=r.grade_estimate||6; r.grade_confidence=r.grade_confidence||50;
     r.psa10_probability=r.psa10_probability||20;
