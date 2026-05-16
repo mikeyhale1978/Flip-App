@@ -1007,10 +1007,10 @@ async function doScan() {
 
   // Three small parallel calls - each tiny so never truncates
   // 4 tiny parallel calls - each has only 3-4 fields so never truncates
-  var gradePrompt  = 'Card grader. This card image. Fill blanks:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=';
-  var advicePrompt = 'Card expert. This card image. Fill blanks:\nadvice=\nissue=\nworthy=\nnotes=\nrawvalue=\npsa10value=';
-  var defect1Prompt= 'Card grader. Centering and corners on this card. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=\ncor_score=\ncor_status=\ncor_notes=';
-  var defect2Prompt= 'Card grader. Edges and surface on this card. Fill blanks:\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
+  var gradePrompt  = 'Card grader. This card image. Fill blanks:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=\nrawvalue=\npsa10value=';
+  var advicePrompt = 'Card expert. This card image. Fill blanks with short answers:\nadvice=\nissue=\nworthy=\nnotes=';
+  var defect1Prompt= 'Card grader. Centering and corners on this card. Use PASS if good, WARN if minor issue, FAIL if serious defect. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=\ncor_score=\ncor_status=\ncor_notes=';
+  var defect2Prompt= 'Card grader. Edges and surface condition on this card. Use PASS if good, WARN if minor issue, FAIL if serious defect. Fill blanks:\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
 
   var defectPrompt = 'Expert card grader. Examine this card image for defects and fill in every blank.\n\ncentering_score=8\ncentering_status=PASS\ncentering_lr=52/48\ncentering_tb=50/50\ncentering_detail=Borders appear even on all sides.\ncorners_score=9\ncorners_status=PASS\ncorners_detail=Corners are sharp with no visible wear.\nedges_score=8\nedges_status=PASS\nedges_detail=Edges are clean with no chipping.\nsurface_score=9\nsurface_status=PASS\nsurface_detail=Surface is clean with no scratches.\n\nReplace every value with your real assessment. Use PASS WARN or FAIL for status fields.';
 
