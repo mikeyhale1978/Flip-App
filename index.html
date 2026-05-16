@@ -1009,7 +1009,7 @@ async function doScan() {
   // 4 tiny parallel calls - each has only 3-4 fields so never truncates
   var gradePrompt  = 'Card grader. This card image. Fill blanks:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=';
   var advicePrompt = 'Card expert. One sentence answers only. Fill blanks:\nadvice=\nissue=\nworthy=\nnotes=';
-  var valuePrompt  = 'Card price expert. Estimate eBay market prices for this card. Numbers only:\nrawvalue=\npsa10value=';
+  var valuePrompt  = 'What are the current eBay sold prices for this trading card? Reply with ONLY two lines, nothing else:\nrawvalue=15\npsa10value=60\nReplace 15 and 60 with real dollar amounts for the card in this image. Only two lines. No other text.';
   var defect1Prompt= 'Card grader. Measure centering and check corners. Use PASS WARN or FAIL. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=\ncor_score=\ncor_status=\ncor_notes=';
   var defect2Prompt= 'Card grader. Edges and surface condition on this card. Use PASS if good, WARN if minor issue, FAIL if serious defect. Fill blanks:\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
 
@@ -1072,7 +1072,7 @@ async function doScan() {
       psa10_probability: parseFloat(flat.psa10_probability||flat.psa10prob||flat.psa10_prob||20)||20,
       biggest_issue:     flat.biggest_issue||flat.issue || 'NONE',
       grading_recommendation: flat.grading_recommendation||flat.recommendation||flat.recommend || 'HOLD',
-      grading_advice: (flat.advice||flat.grading_advice||'Check card carefully before grading.').split('.').filter(function(s){return s.trim();}).slice(0,2).join('.')+'.',
+      grading_advice: (function(s){s=s||'Check card carefully before grading.';var parts=s.split('.');return (parts[0]+(parts[1]?'.'+parts[1]:'')+'.').slice(0,120);})(flat.advice||flat.grading_advice),
       raw_est_value:  parseFloat(flat.raw_est_value||flat.raw_value||flat.rawvalue||0)||0,
       psa10_est_value:parseFloat(flat.psa10_est_value||flat.psa10_value||flat.psa10value||0)||0,
       flip_worthy:    flat.flip_worthy!==false && flat.flip_worthy!=='no' && flat.flip_worthy!==0,
