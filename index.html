@@ -998,14 +998,17 @@ async function doScan() {
   scanIdx=0;document.getElementById('scan-step').textContent=scanSteps[0];
   scanTimer=setInterval(function(){scanIdx=(scanIdx+1)%scanSteps.length;document.getElementById('scan-step').textContent=scanSteps[scanIdx];},1300);
 
-  // Two parallel calls - grading analysis + market values
-  var gradePrompt = 'You are an expert card grader. Analyze this trading card image carefully.\nFill every blank below with a real assessment. No other text.\n\nidentified=true\nplayer=full name here\ncard_name=year and set name here\nsport=Baseball or Basketball or Football or Soccer or Hockey or Pokemon or Other\nmanufacturer=brand name here\nyear=year here\ngrade_estimate=number 1 to 10\ngrade_confidence=percent 1 to 100\npsa10_probability=percent 0 to 100\nbiggest_issue=describe main defect or write NONE\ngrading_recommendation=SUBMIT or HOLD or SKIP\ngrading_advice=one sentence of grading advice\nflip_worthy=true or false\nmarket_notes=one sentence about market demand\ncentering_score=number 1 to 10\ncentering_status=PASS or WARN or FAIL\ncentering_lr=left/right ratio like 55/45\ncentering_tb=top/bottom ratio like 50/50\ncentering_detail=describe what you see with centering\ncorners_score=number 1 to 10\ncorners_status=PASS or WARN or FAIL\ncorners_detail=describe what you see at the corners\nedges_score=number 1 to 10\nedges_status=PASS or WARN or FAIL\nedges_detail=describe what you see on the edges\nsurface_score=number 1 to 10\nsurface_status=PASS or WARN or FAIL\nsurface_detail=describe scratches holo condition print quality\n\nIf card cannot be identified write: identified=false and reason=why';
+  // Three small parallel calls - each tiny so never truncates
+  var gradePrompt = 'Expert card grader. Look at this card image.\nFill every blank with a real value:\n\nidentified=true\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade_estimate=\ngrade_confidence=\npsa10_probability=\ngrading_recommendation=\ngrading_advice=\nbiggest_issue=\nflip_worthy=\nmarket_notes=';
 
-  var valuePrompt = 'You are a card price expert. Look at this trading card image and estimate values.\nFill each blank with a number. No other text.\n\nraw_est_value=\npsa10_est_value=';
+  var defectPrompt = 'Card grader analyzing defects on this card image.\nFill every blank:\n\ncentering_score=\ncentering_status=\ncentering_lr=\ncentering_tb=\ncentering_detail=\ncorners_score=\ncorners_status=\ncorners_detail=\nedges_score=\nedges_status=\nedges_detail=\nsurface_score=\nsurface_status=\nsurface_detail=';
+
+  var valuePrompt = 'Card price expert. Estimate values for this card image.\nFill blanks with numbers:\n\nraw_est_value=\npsa10_est_value=';
 
   try {
     var results = await Promise.all([
       callGemini(gradePrompt, camB64, camType),
+      callGemini(defectPrompt, camB64, camType),
       callGemini(valuePrompt, camB64, camType)
     ]);
     clearInterval(scanTimer);
@@ -1032,16 +1035,7 @@ async function doScan() {
     }
 
     var flat = {};
-    var debugLog = '';
-    results.forEach(function(txt){
-      debugLog += 'RAW:\n' + txt.slice(0,400) + '\n\n';
-      Object.assign(flat, parseScanLines(txt));
-    });
-    debugLog += 'PARSED:\n' + JSON.stringify(flat).slice(0,400);
-    // Show debug on screen and STOP so we can read it
-    document.getElementById('scan-results').innerHTML = '<div class="panel" style="border-color:var(--gold);margin-top:14px"><div style="font-family:monospace;font-size:13px;letter-spacing:1px;color:var(--gold);margin-bottom:8px">DEBUG OUTPUT</div><div style="font-family:monospace;font-size:11px;color:var(--text);white-space:pre-wrap;word-break:break-all;line-height:1.6">'+debugLog+'</div></div>';
-    btn.disabled = false;
-    return; // STOP HERE - remove this line once debugging is done
+    results.forEach(function(txt){ Object.assign(flat, parseScanLines(txt)); });
 
     // Build r object matching what renderCamResults expects
     var r = {
