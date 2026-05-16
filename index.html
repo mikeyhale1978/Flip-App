@@ -1006,26 +1006,20 @@ async function doScan() {
   scanTimer=setInterval(function(){scanIdx=(scanIdx+1)%scanSteps.length;document.getElementById('scan-step').textContent=scanSteps[scanIdx];},1300);
 
   // Three small parallel calls - each tiny so never truncates
-  var gradePrompt = 'Expert card grader. Analyze this card image and fill in every blank.\n\nidentified=true\nplayer=Full Player Name\ncard_name=Year Set Name\nsport=Football\nmanufacturer=Panini\ngrade_estimate=8\ngrade_confidence=75\npsa10_probability=35\ngrading_recommendation=SUBMIT\ngrading_advice=Worth submitting based on condition.\nbiggest_issue=NONE\nflip_worthy=true\nmarket_notes=Strong demand from collectors.\n\nReplace every value with your real assessment of this specific card.';
+  var gradePrompt = 'Expert card grader. Analyze this card image and fill in every blank with your real assessment.\n\nidentified=true\nplayer=Full Player Name\ncard_name=Year Set Name\nsport=Football\nmanufacturer=Panini\ngrade_estimate=8\ngrade_confidence=75\npsa10_probability=35\ngrading_recommendation=SUBMIT\ngrading_advice=Worth submitting based on condition.\nbiggest_issue=NONE\nflip_worthy=true\nmarket_notes=Strong demand from collectors.\nraw_est_value=25\npsa10_est_value=90\ncentering_score=8\ncentering_status=PASS\ncentering_lr=52/48\ncentering_tb=50/50\ncentering_detail=Borders appear even on all sides.\ncorners_score=9\ncorners_status=PASS\ncorners_detail=Corners are sharp with no visible wear.\nedges_score=8\nedges_status=PASS\nedges_detail=Edges are clean with no chipping.\nsurface_score=9\nsurface_status=PASS\nsurface_detail=Surface is clean with no scratches.\n\nReplace EVERY value above with your real assessment of this specific card. All fields required.';
 
   var defectPrompt = 'Expert card grader. Examine this card image for defects and fill in every blank.\n\ncentering_score=8\ncentering_status=PASS\ncentering_lr=52/48\ncentering_tb=50/50\ncentering_detail=Borders appear even on all sides.\ncorners_score=9\ncorners_status=PASS\ncorners_detail=Corners are sharp with no visible wear.\nedges_score=8\nedges_status=PASS\nedges_detail=Edges are clean with no chipping.\nsurface_score=9\nsurface_status=PASS\nsurface_detail=Surface is clean with no scratches.\n\nReplace every value with your real assessment. Use PASS WARN or FAIL for status fields.';
 
   var valuePrompt = 'Card price expert. Look at this card and estimate current eBay market values.\n\nraw_est_value=25\npsa10_est_value=90\n\nReplace numbers with realistic dollar amounts for this specific card.';
 
   try {
-    var results = await Promise.all([
-      callGemini(gradePrompt, camB64, camType),
-      callGemini(defectPrompt, camB64, camType),
-      callGemini(valuePrompt, camB64, camType)
-    ]);
+    var scanTxt = await callGemini(gradePrompt, camB64, camType);
     clearInterval(scanTimer);
     document.getElementById('scan-loading').classList.remove('show');
 
-    // Parse both responses using key=value format
     function parseScanLines(txt) {
       var obj = {};
       if (!txt) return obj;
-      // Join continuation lines (lines without = that follow a field)
       var lines = txt.split('\n');
       var joined = [];
       lines.forEach(function(line) {
@@ -1034,7 +1028,6 @@ async function doScan() {
         if (line.indexOf('=') > 0) {
           joined.push(line);
         } else if (joined.length > 0) {
-          // Continuation of previous line - append to it
           joined[joined.length-1] += ' ' + line;
         }
       });
@@ -1053,10 +1046,9 @@ async function doScan() {
       return obj;
     }
 
-    var flat = {};
-    results.forEach(function(txt){ Object.assign(flat, parseScanLines(txt)); });
+    var flat = parseScanLines(scanTxt);
 
-    // Build r object matching what renderCamResults expects
+        // Build r object matching what renderCamResults expects
     var r = {
       identified: flat.identified !== false && flat.identified !== 'no',
       player:     flat.player     || 'Unknown Card',
