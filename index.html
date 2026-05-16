@@ -934,7 +934,7 @@ function renderCamResults(r) {
       +'<div><div style="font-size:16px;font-weight:600;color:var(--text)">'+r.player+'</div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);margin-top:2px">'+r.card_name+'</div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+r.sport+(r.manufacturer?' · '+r.manufacturer:'')+'</div></div>'
-      +'<div style="text-align:right"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:60px;line-height:1;color:'+scColor+'">'+sc+'</div>'
+      +'<div style="text-align:right"><div style="font-family:monospace;font-size:60px;line-height:1;color:'+scColor+'">'+sc+'</div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--muted)">'+r.grade_confidence+'% confidence</div></div>'
     +'</div>'
     +'<div style="height:8px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:'+barW+'%;border-radius:8px;background:linear-gradient(90deg,var(--red),var(--gold),var(--accent));transition:width 1s ease"></div></div>'
@@ -1038,8 +1038,10 @@ async function doScan() {
       Object.assign(flat, parseScanLines(txt));
     });
     debugLog += 'PARSED:\n' + JSON.stringify(flat).slice(0,400);
-    // Show debug on screen temporarily
-    document.getElementById('scan-results').innerHTML = '<div class="panel" style="border-color:var(--gold)"><div style="font-family:monospace;font-size:10px;color:var(--gold);white-space:pre-wrap;word-break:break-all">'+debugLog+'</div></div>';
+    // Show debug on screen and STOP so we can read it
+    document.getElementById('scan-results').innerHTML = '<div class="panel" style="border-color:var(--gold);margin-top:14px"><div style="font-family:monospace;font-size:13px;letter-spacing:1px;color:var(--gold);margin-bottom:8px">DEBUG OUTPUT</div><div style="font-family:monospace;font-size:11px;color:var(--text);white-space:pre-wrap;word-break:break-all;line-height:1.6">'+debugLog+'</div></div>';
+    btn.disabled = false;
+    return; // STOP HERE - remove this line once debugging is done
 
     // Build r object matching what renderCamResults expects
     var r = {
@@ -1229,7 +1231,7 @@ function doScout() {
   });
 
   if(!res.length){
-    out.innerHTML='<div class="panel" style="text-align:center"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:var(--purple);letter-spacing:2px;margin-bottom:8px">NO MATCHES</div><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted)">Try raising max buy or lowering min sale</div></div>';
+    out.innerHTML='<div class="panel" style="text-align:center"><div style="font-family:monospace;font-size:18px;color:var(--purple);letter-spacing:2px;margin-bottom:8px">NO MATCHES</div><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted)">Try raising max buy or lowering min sale</div></div>';
     return;
   }
 
