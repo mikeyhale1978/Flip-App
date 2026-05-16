@@ -915,6 +915,79 @@ function resetScan() {
   document.getElementById('cam-input').value='';
 }
 
+function renderCamResults(r) {
+  var sc=r.grade_estimate||6, barW=Math.round(sc/10*100);
+  var scColor=sc>=9?'var(--accent)':sc>=8?'#64d4a0':sc>=7?'var(--gold)':'var(--red)';
+  var recColor=r.grading_recommendation==='SUBMIT'?'var(--accent)':r.grading_recommendation==='HOLD'?'var(--gold)':'var(--red)';
+  var recIcon=r.grading_recommendation==='SUBMIT'?'✅':r.grading_recommendation==='HOLD'?'⏳':'❌';
+  function defIcon(s){return s==='PASS'?'✅':s==='WARN'?'⚠️':'❌';}
+  function defCls(s){return s==='PASS'?'dp':s==='WARN'?'dw':'df';}
+  function defLabel(s){return s==='PASS'?'CLEAN':s==='WARN'?'MINOR ISSUE':'DEFECT';}
+  var rawFlipEst=Math.round((r.raw_est_value||0)*1.4);
+  var gradedProfit=Math.round((r.psa10_est_value||0)*(1-0.129)-0.30-(r.raw_est_value||0)-25-4);
+  var gradedROI=(r.raw_est_value>0)?Math.round((gradedProfit/((r.raw_est_value||0)+25+4))*100):0;
+  var rawProfit=Math.round(rawFlipEst*(1-0.129)-0.30-(r.raw_est_value||0));
+  var rawROI=(r.raw_est_value>0)?Math.round((rawProfit/(r.raw_est_value||1))*100):0;
+
+  var html='<div class="panel">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+      +'<div><div style="font-size:16px;font-weight:600;color:var(--text)">'+r.player+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--muted);margin-top:2px">'+r.card_name+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);margin-top:4px">'+r.sport+(r.manufacturer?' · '+r.manufacturer:'')+'</div></div>'
+      +'<div style="text-align:right"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:60px;line-height:1;color:'+scColor+'">'+sc+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:var(--muted)">'+r.grade_confidence+'% confidence</div></div>'
+    +'</div>'
+    +'<div style="height:8px;background:var(--border);border-radius:8px;overflow:hidden;margin-bottom:4px"><div style="height:100%;width:'+barW+'%;border-radius:8px;background:linear-gradient(90deg,var(--red),var(--gold),var(--accent));transition:width 1s ease"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-family:\'DM Mono\',monospace;font-size:8px;color:var(--muted);margin-bottom:10px"><span>1</span><span>3</span><span>5</span><span>7</span><span>9</span><span>10</span></div>'
+    +'<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:10px 12px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted);line-height:1.5">'
+      +'<strong>PSA 10 Probability: <span style="color:'+scColor+'">'+r.psa10_probability+'%</span></strong> &nbsp;·&nbsp; '
+      +'Recommendation: <span style="color:'+recColor+'">'+recIcon+' '+r.grading_recommendation+'</span><br>'+r.grading_advice
+    +'</div>'
+  +'</div>'
+  // Defect grid
+  +'<div class="defect-grid">'
+  +[
+    {k:'centering',icon:'📐',label:'Centering',extra:(r.centering.left_right_estimate||'')+(r.centering.top_bottom_estimate?' · '+r.centering.top_bottom_estimate:'')},
+    {k:'corners',icon:'📌',label:'Corners',extra:''},
+    {k:'edges',icon:'📏',label:'Edges',extra:''},
+    {k:'surface',icon:'🔍',label:'Surface',extra:''},
+  ].map(function(cat){
+    var d=r[cat.k]||{}; var st=d.status||'WARN';
+    return '<div class="defect-card"><div class="defect-icon">'+cat.icon+'</div>'
+      +'<div class="defect-name">'+cat.label+(cat.extra?'<br><span style="font-size:7px">'+cat.extra+'</span>':'')+'</div>'
+      +'<div class="defect-status '+defCls(st)+'">'+defIcon(st)+' '+defLabel(st)+'</div>'
+      +'<div class="defect-detail">'+(d.detail||'—')+'</div></div>';
+  }).join('')
+  +'</div>'
+  +(r.biggest_issue&&r.biggest_issue!=='NONE'?
+    '<div class="panel" style="border-color:rgba(245,197,24,.3);background:rgba(245,197,24,.05);margin-bottom:14px">'
+    +'<div class="panel-title" style="color:var(--gold)">⚠️ BIGGEST ISSUE</div>'
+    +'<div style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text)">'+r.biggest_issue+'</div></div>':'')
+  // Market data
+  +'<div class="panel"><div class="panel-title">💰 MARKET DATA</div>'
+    +'<div class="stat-grid cols3" style="margin-bottom:8px">'
+      +'<div class="stat-cell"><div class="stat-label">Raw Value</div><div class="stat-val c-white">$'+r.raw_est_value+'</div></div>'
+      +'<div class="stat-cell"><div class="stat-label">PSA 10 Value</div><div class="stat-val c-green">$'+r.psa10_est_value+'</div></div>'
+      +'<div class="stat-cell"><div class="stat-label">Multiplier</div><div class="stat-val c-purple">'+(r.raw_est_value>0?parseFloat((r.psa10_est_value/r.raw_est_value).toFixed(1))+'x':'—')+'</div></div>'
+      +'<div class="stat-cell"><div class="stat-label">Graded Profit</div><div class="stat-val '+(gradedProfit>0?'c-green':'c-red')+'">'+(gradedProfit>0?'+':'')+gradedProfit+'</div></div>'
+      +'<div class="stat-cell"><div class="stat-label">Graded ROI</div><div class="stat-val '+(gradedROI>=30?'c-green':gradedROI>=0?'c-gold':'c-red')+'">'+(gradedROI>=0?'+':'')+gradedROI+'%</div></div>'
+      +'<div class="stat-cell"><div class="stat-label">Flip Worthy</div><div class="stat-val '+(r.flip_worthy?'c-green':'c-red')+'">'+(r.flip_worthy?'YES':'NO')+'</div></div>'
+    +'</div>'
+    +'<div class="flip-bar-label">💰 RAW FLIP</div>'
+    +'<div class="flip-bar-grid" style="border-radius:8px;overflow:hidden;margin-bottom:10px">'
+      +'<div class="flip-cell"><div class="flip-lbl">BUY</div><div class="flip-val c-white">$'+r.raw_est_value+'</div></div>'
+      +'<div class="flip-cell"><div class="flip-lbl">SELL</div><div class="flip-val c-gold">~$'+rawFlipEst+'</div></div>'
+      +'<div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val '+(rawProfit>0?'c-green':'c-red')+'">$'+rawProfit+'</div></div>'
+      +'<div class="flip-cell"><div class="flip-lbl">ROI</div><div class="flip-val '+(rawROI>=20?'c-green':'c-gold')+'">'+(rawROI>=0?'+':'')+rawROI+'%</div></div>'
+    +'</div>'
+    +'<div class="advice-box">'+r.market_notes+'</div>'
+  +'</div>'
+  +'<button class="btn btn-green" onclick="loadIntoCalc('+r.raw_est_value+','+r.psa10_est_value+')">⚡ LOAD INTO GRADE CALC</button>';
+
+  document.getElementById('scan-results').innerHTML = html;
+  setTimeout(function(){var f=document.querySelector('.grade-bar-fill');if(f)f.style.width=barW+'%';},100);
+}
+
 async function doScan() {
   if (!camB64) return;
   if (!GEMINI_KEY) { showApiSetup(); return; }
