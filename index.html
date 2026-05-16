@@ -1006,11 +1006,11 @@ async function doScan() {
   scanTimer=setInterval(function(){scanIdx=(scanIdx+1)%scanSteps.length;document.getElementById('scan-step').textContent=scanSteps[scanIdx];},1300);
 
   // Three small parallel calls - each tiny so never truncates
-  var gradePrompt = 'Expert card grader. Look at this card image.\nFill every blank with a real value:\n\nidentified=true\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade_estimate=\ngrade_confidence=\npsa10_probability=\ngrading_recommendation=\ngrading_advice=\nbiggest_issue=\nflip_worthy=\nmarket_notes=';
+  var gradePrompt = 'Expert card grader. Analyze this card image and fill in every blank.\n\nidentified=true\nplayer=Full Player Name\ncard_name=Year Set Name\nsport=Football\nmanufacturer=Panini\ngrade_estimate=8\ngrade_confidence=75\npsa10_probability=35\ngrading_recommendation=SUBMIT\ngrading_advice=Worth submitting based on condition.\nbiggest_issue=NONE\nflip_worthy=true\nmarket_notes=Strong demand from collectors.\n\nReplace every value with your real assessment of this specific card.';
 
-  var defectPrompt = 'Card grader analyzing defects on this card image.\nFill every blank:\n\ncentering_score=\ncentering_status=\ncentering_lr=\ncentering_tb=\ncentering_detail=\ncorners_score=\ncorners_status=\ncorners_detail=\nedges_score=\nedges_status=\nedges_detail=\nsurface_score=\nsurface_status=\nsurface_detail=';
+  var defectPrompt = 'Expert card grader. Examine this card image for defects and fill in every blank.\n\ncentering_score=8\ncentering_status=PASS\ncentering_lr=52/48\ncentering_tb=50/50\ncentering_detail=Borders appear even on all sides.\ncorners_score=9\ncorners_status=PASS\ncorners_detail=Corners are sharp with no visible wear.\nedges_score=8\nedges_status=PASS\nedges_detail=Edges are clean with no chipping.\nsurface_score=9\nsurface_status=PASS\nsurface_detail=Surface is clean with no scratches.\n\nReplace every value with your real assessment. Use PASS WARN or FAIL for status fields.';
 
-  var valuePrompt = 'Card price expert. Estimate values for this card image.\nFill blanks with numbers:\n\nraw_est_value=\npsa10_est_value=';
+  var valuePrompt = 'Card price expert. Look at this card and estimate current eBay market values.\n\nraw_est_value=25\npsa10_est_value=90\n\nReplace numbers with realistic dollar amounts for this specific card.';
 
   try {
     var results = await Promise.all([
@@ -1064,27 +1064,39 @@ async function doScan() {
       sport:      flat.sport       || 'Unknown',
       year:       String(flat.year || ''),
       manufacturer: flat.manufacturer || '',
-      grade_estimate:    flat.grade_estimate    || 6,
-      grade_confidence:  flat.grade_confidence  || 50,
-      psa10_probability: flat.psa10_probability || 20,
-      biggest_issue:     flat.biggest_issue     || 'NONE',
-      grading_recommendation: flat.grading_recommendation || 'HOLD',
-      grading_advice: flat.grading_advice || 'Take a clearer photo for better analysis.',
-      raw_est_value:  parseFloat(flat.raw_est_value)  || 0,
-      psa10_est_value:parseFloat(flat.psa10_est_value)|| 0,
-      flip_worthy:    flat.flip_worthy !== false && flat.flip_worthy !== 'no',
-      market_notes:   flat.market_notes || 'Check eBay sold listings for current market data.',
+      grade_estimate:    parseFloat(flat.grade_estimate||flat.grade||6)||6,
+      grade_confidence:  parseFloat(flat.grade_confidence||flat.confidence||50)||50,
+      psa10_probability: parseFloat(flat.psa10_probability||flat.psa10prob||flat.psa10_prob||20)||20,
+      biggest_issue:     flat.biggest_issue||flat.issue || 'NONE',
+      grading_recommendation: flat.grading_recommendation||flat.recommendation||flat.recommend || 'HOLD',
+      grading_advice: flat.grading_advice||flat.advice || 'Check card carefully before grading.',
+      raw_est_value:  parseFloat(flat.raw_est_value||flat.raw_value||flat.rawvalue||0)||0,
+      psa10_est_value:parseFloat(flat.psa10_est_value||flat.psa10_value||flat.psa10value||0)||0,
+      flip_worthy:    flat.flip_worthy!==false && flat.flip_worthy!=='no' && flat.flip_worthy!==0,
+      market_notes:   flat.market_notes||flat.notes || 'Check eBay sold listings for current market data.',
       reason:         flat.reason || '',
       centering: {
-        score:  flat.centering_score  || 7,
-        status: flat.centering_status || 'WARN',
-        left_right_estimate: flat.centering_lr || '?/?',
-        top_bottom_estimate: flat.centering_tb || '?/?',
-        detail: flat.centering_detail || 'Could not assess'
+        score:  parseFloat(flat.centering_score||flat.cen_score||7)||7,
+        status: flat.centering_status||flat.cen_status || 'WARN',
+        left_right_estimate: flat.centering_lr||flat.cen_lr||flat.lr || '?/?',
+        top_bottom_estimate: flat.centering_tb||flat.cen_tb||flat.tb || '?/?',
+        detail: flat.centering_detail||flat.cen_detail || 'Could not assess'
       },
-      corners: { score: flat.corners_score||7, status: flat.corners_status||'WARN', detail: flat.corners_detail||'Could not assess' },
-      edges:   { score: flat.edges_score||7,   status: flat.edges_status||'WARN',   detail: flat.edges_detail||'Could not assess' },
-      surface: { score: flat.surface_score||7, status: flat.surface_status||'WARN', detail: flat.surface_detail||'Could not assess' },
+      corners: {
+        score:  parseFloat(flat.corners_score||flat.cor_score||7)||7,
+        status: flat.corners_status||flat.cor_status || 'WARN',
+        detail: flat.corners_detail||flat.cor_detail || 'Could not assess'
+      },
+      edges: {
+        score:  parseFloat(flat.edges_score||flat.edg_score||7)||7,
+        status: flat.edges_status||flat.edg_status || 'WARN',
+        detail: flat.edges_detail||flat.edg_detail || 'Could not assess'
+      },
+      surface: {
+        score:  parseFloat(flat.surface_score||flat.sur_score||7)||7,
+        status: flat.surface_status||flat.sur_status || 'WARN',
+        detail: flat.surface_detail||flat.sur_detail || 'Could not assess'
+      },
     };
 
     if (!r.identified) {
