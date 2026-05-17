@@ -989,6 +989,11 @@ function renderCamResults(r) {
     +'</div>'
     +'<div class="advice-box">'+r.market_notes+'</div>'
   +'</div>'
+  +'<div style="display:flex;gap:5px;margin-bottom:8px">'
+  +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_Auction=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">🔨 AUCTION</a>'
+  +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_BIN=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">🛒 BIN</a>'
+  +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">📊 SOLD</a>'
+  +'</div>'
   +'<button class="btn btn-green" onclick="loadIntoCalc('+r.raw_est_value+','+r.psa10_est_value+')">⚡ LOAD INTO GRADE CALC</button>';
 
   document.getElementById('scan-results').innerHTML = html;
@@ -1195,7 +1200,12 @@ async function doScan() {
       +'</div>'
       +'<div class="advice-box">'+r.market_notes+'</div>'
     +'</div>'
-    +'<button class="btn btn-green" onclick="loadIntoCalc('+r.raw_est_value+','+r.psa10_est_value+')">⚡ LOAD INTO GRADE CALC</button>';
+    +'<div style="display:flex;gap:5px;margin-bottom:8px">'
+  +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_Auction=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">🔨 AUCTION</a>'
+  +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_BIN=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">🛒 BIN</a>'
+  +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_Sold=1&LH_Complete=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">📊 SOLD</a>'
+  +'</div>'
+  +'<button class="btn btn-green" onclick="loadIntoCalc('+r.raw_est_value+','+r.psa10_est_value+')">⚡ LOAD INTO GRADE CALC</button>';
 
     document.getElementById('scan-results').innerHTML = html;
     setTimeout(function(){var f=document.querySelector('.grade-bar-fill');if(f)f.style.width=barW+'%';},100);
