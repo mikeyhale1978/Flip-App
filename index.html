@@ -1010,7 +1010,8 @@ async function doScan() {
   var gradePrompt  = 'Card grader. This card image. Fill blanks:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=';
   var advicePrompt = 'Card expert. One sentence answers only. Fill blanks:\nadvice=\nissue=\nworthy=\nnotes=';
   var valuePrompt  = 'What are the current eBay sold prices for this trading card? Reply with ONLY two lines, nothing else:\nrawvalue=15\npsa10value=60\nReplace 15 and 60 with real dollar amounts for the card in this image. Only two lines. No other text.';
-  var defect1Prompt= 'Card grader. Measure centering and check corners. Use PASS WARN or FAIL. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=\ncor_score=\ncor_status=\ncor_notes=';
+  var defect1Prompt= 'Card grader. Centering only. Use PASS WARN or FAIL. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=';
+  var defect3Prompt= 'Card grader. Corners only. Use PASS WARN or FAIL. Fill blanks:\ncor_score=\ncor_status=\ncor_notes=';
   var defect2Prompt= 'Card grader. Edges and surface condition on this card. Use PASS if good, WARN if minor issue, FAIL if serious defect. Fill blanks:\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
 
 
@@ -1022,7 +1023,8 @@ async function doScan() {
       callGemini(advicePrompt,  camB64, camType),
       callGemini(valuePrompt,   camB64, camType),
       callGemini(defect1Prompt, camB64, camType),
-      callGemini(defect2Prompt, camB64, camType)
+      callGemini(defect2Prompt, camB64, camType),
+      callGemini(defect3Prompt, camB64, camType)
     ]);
     var scanTxt = scanResults.join('\n');
     clearInterval(scanTimer);
@@ -1049,7 +1051,7 @@ async function doScan() {
         var v = line.slice(eq+1).trim().replace(/[*_`"]/g,'');
         if (!k || v === '') return;
         var num = parseFloat(v);
-        if (!isNaN(num) && !/[a-zA-Z]/.test(v)) obj[k] = num;
+        if (!isNaN(num) && !/[a-zA-Z]/.test(v) && v.indexOf('/')===-1) obj[k] = num;
         else if (v.toLowerCase()==='true') obj[k] = true;
         else if (v.toLowerCase()==='false') obj[k] = false;
         else obj[k] = v;
