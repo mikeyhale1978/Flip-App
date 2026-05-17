@@ -1093,7 +1093,7 @@ async function doScan() {
         var p = flat.player;
         if (p && p!=='Unknown Card' && p!=='Panini Prizm' && p!=='Topps Chrome' && p!=='Upper Deck') return p;
         // Try to extract player name from notes - skip known brand words
-        var brands = /Panini|Prizm|Topps|Chrome|Upper|Deck|Bowman|Donruss|Pokemon|Fleer|Leaf|Select/i;
+        var brands = /Panini|Prizm|Topps|Chrome|Upper|Deck|Bowman|Donruss|Pokemon|Fleer|Leaf|Select|Draft|Picks|Mosaic|Optic|National|Treasures|Contenders|Score|Absolute/i;
         var txt = flat.notes||flat.advice||'';
         var names = txt.match(/([A-Z][a-z]+ [A-Z][a-z]+)/g)||[];
         for (var i=0;i<names.length;i++) { if (!brands.test(names[i])) return names[i]; }
@@ -1138,22 +1138,22 @@ async function doScan() {
         status: flat.cen_status||flat.centering_status || 'WARN',
         left_right_estimate: flat.cen_lr||flat.centering_lr || '',
         top_bottom_estimate: flat.cen_tb||flat.centering_tb || '',
-        detail: (flat.cen_notes||flat.cen_detail||flat.centering_detail||'Could not assess').slice(0,150)
+        detail: (function(s){s=s||'Could not assess';if(s.length<=120)return s;var t=s.slice(0,120);return t.slice(0,t.lastIndexOf(' '))||t;})(flat.cen_notes||flat.cen_detail||flat.centering_detail)
       },
       corners: {
         score:  parseFloat(flat.cor_score||flat.corners_score||7)||7,
         status: flat.cor_status||flat.corners_status || 'WARN',
-        detail: (flat.cor_notes||flat.cor_detail||flat.corners_detail||'Could not assess').slice(0,150)
+        detail: (function(s){s=s||'Could not assess';if(s.length<=120)return s;var t=s.slice(0,120);return t.slice(0,t.lastIndexOf(' '))||t;})(flat.cor_notes||flat.cor_detail||flat.corners_detail)
       },
       edges: {
         score:  parseFloat(flat.edg_score||flat.edges_score||7)||7,
         status: flat.edg_status||flat.edges_status || 'WARN',
-        detail: (flat.edg_notes||flat.edg_detail||flat.edges_detail||'Could not assess').slice(0,150)
+        detail: (function(s){s=s||'Could not assess';if(s.length<=120)return s;var t=s.slice(0,120);return t.slice(0,t.lastIndexOf(' '))||t;})(flat.edg_notes||flat.edg_detail||flat.edges_detail)
       },
       surface: {
         score:  parseFloat(flat.sur_score||flat.surface_score||7)||7,
         status: flat.sur_status||flat.surface_status || 'WARN',
-        detail: (flat.sur_notes||flat.sur_detail||flat.surface_detail||'Could not assess').slice(0,150)
+        detail: (function(s){s=s||'Could not assess';if(s.length<=120)return s;var t=s.slice(0,120);return t.slice(0,t.lastIndexOf(' '))||t;})(flat.sur_notes||flat.sur_detail||flat.surface_detail)
       },
     };
 
