@@ -1089,7 +1089,16 @@ async function doScan() {
         // Build r object matching what renderCamResults expects
     var r = {
       identified: flat.identified !== false && flat.identified !== 'no',
-      player:     flat.player && flat.player!=='Unknown Card' ? flat.player : (flat.notes||flat.advice||'').match(/([A-Z][a-z]+ [A-Z][a-z]+)/)?((flat.notes||flat.advice||'').match(/([A-Z][a-z]+ [A-Z][a-z]+)/)[1]):'Unknown Card',
+      player:     (function(){
+        var p = flat.player;
+        if (p && p!=='Unknown Card' && p!=='Panini Prizm' && p!=='Topps Chrome' && p!=='Upper Deck') return p;
+        // Try to extract player name from notes - skip known brand words
+        var brands = /Panini|Prizm|Topps|Chrome|Upper|Deck|Bowman|Donruss|Pokemon|Fleer|Leaf|Select/i;
+        var txt = flat.notes||flat.advice||'';
+        var names = txt.match(/([A-Z][a-z]+ [A-Z][a-z]+)/g)||[];
+        for (var i=0;i<names.length;i++) { if (!brands.test(names[i])) return names[i]; }
+        return p||'Unknown Card';
+      })(),
       card_name:  String(flat.card_name || flat.card || ''),
       sport:      flat.sport       || 'Unknown',
       year:       String(flat.year || ''),
@@ -1110,22 +1119,22 @@ async function doScan() {
         status: flat.cen_status||flat.centering_status || 'WARN',
         left_right_estimate: flat.cen_lr||flat.centering_lr || '',
         top_bottom_estimate: flat.cen_tb||flat.centering_tb || '',
-        detail: flat.cen_notes||flat.cen_detail||flat.centering_detail || 'Could not assess'
+        detail: (flat.cen_notes||flat.cen_detail||flat.centering_detail||'Could not assess').slice(0,150)
       },
       corners: {
         score:  parseFloat(flat.cor_score||flat.corners_score||7)||7,
         status: flat.cor_status||flat.corners_status || 'WARN',
-        detail: flat.cor_notes||flat.cor_detail||flat.corners_detail || 'Could not assess'
+        detail: (flat.cor_notes||flat.cor_detail||flat.corners_detail||'Could not assess').slice(0,150)
       },
       edges: {
         score:  parseFloat(flat.edg_score||flat.edges_score||7)||7,
         status: flat.edg_status||flat.edges_status || 'WARN',
-        detail: flat.edg_notes||flat.edg_detail||flat.edges_detail || 'Could not assess'
+        detail: (flat.edg_notes||flat.edg_detail||flat.edges_detail||'Could not assess').slice(0,150)
       },
       surface: {
         score:  parseFloat(flat.sur_score||flat.surface_score||7)||7,
         status: flat.sur_status||flat.surface_status || 'WARN',
-        detail: flat.sur_notes||flat.sur_detail||flat.surface_detail || 'Could not assess'
+        detail: (flat.sur_notes||flat.sur_detail||flat.surface_detail||'Could not assess').slice(0,150)
       },
     };
 
