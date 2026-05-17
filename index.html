@@ -1073,7 +1073,7 @@ async function doScan() {
   // 4 tiny parallel calls - each has only 3-4 fields so never truncates
   var gradePrompt  = 'Card grader. This card image. Fill blanks:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=';
   var advicePrompt = 'Card expert. One sentence answers only. Fill blanks:\nadvice=\nissue=\nworthy=\nnotes=';
-  var valuePrompt  = 'Look at this trading card. What is the current raw (ungraded) eBay sold price? What is the PSA 10 graded eBay sold price?\nAnswer with only two numbers on two lines:\nrawvalue=\npsa10value=\nExample response:\nrawvalue=8\npsa10value=35';
+  var valuePrompt  = 'Look at this trading card image. Estimate current eBay market values.\nIf this is already a graded slab, use the slab value for psa10value and raw card value for rawvalue.\nReply with ONLY these two lines:\nrawvalue=NUMBER\npsa10value=NUMBER\nReplace NUMBER with real dollar amounts. Example: rawvalue=25 and psa10value=90';
   var defect1Prompt= 'Card grader. Centering only. Use PASS WARN or FAIL. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=';
   var defect3Prompt= 'Card grader. Corners only. Use PASS WARN or FAIL. Fill blanks:\ncor_score=\ncor_status=\ncor_notes=';
   var defect2Prompt= 'Card grader. Edges and surface condition on this card. Use PASS if good, WARN if minor issue, FAIL if serious defect. Fill blanks:\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
@@ -1098,11 +1098,20 @@ async function doScan() {
     // Fallback: find any dollar amounts near key words
     if (!rawMatch) rawMatch = valueTxt.match(/raw[^\d$]{0,30}\$?([\d.]+)/i);
     if (!p10Match) p10Match = valueTxt.match(/psa\s*10[^\d$]{0,30}\$?([\d.]+)/i);
-    // Last resort: grab first two numbers from response
+    // Last resort: grab any numbers from response
     if (!rawMatch || !p10Match) {
-      var allNums = valueTxt.match(/\$([\d.]+)/g)||[];
-      if (!rawMatch && allNums[0]) rawMatch = ['', allNums[0].replace('$','')];
-      if (!p10Match && allNums[1]) p10Match = ['', allNums[1].replace('$','')];
+      var allNums = (valueTxt.match(/\$([\d.]+)/g)||[]).map(function(n){return n.replace('$','');});
+      if (!allNums.length) {
+        // No $ signs - try plain numbers
+        allNums = (valueTxt.match(/\b(\d+)\b/g)||[]).filter(function(n){return parseInt(n)>0&&parseInt(n)<50000;});
+      }
+      if (!rawMatch && allNums[0]) rawMatch = ['', allNums[0]];
+      if (!p10Match && allNums[1]) p10Match = ['', allNums[1]];
+      // If only one number found, use it for both
+      if (!rawMatch && !p10Match && allNums.length===1) {
+        rawMatch = ['', allNums[0]];
+        p10Match = ['', allNums[0]];
+      }
     }
     var valueLines = '';
     if (rawMatch) valueLines += 'rawvalue=' + rawMatch[1] + '\n';
