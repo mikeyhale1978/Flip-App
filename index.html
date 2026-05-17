@@ -1102,8 +1102,12 @@ async function doScan() {
     if (!rawMatch || !p10Match) {
       var allNums = (valueTxt.match(/\$([\d.]+)/g)||[]).map(function(n){return n.replace('$','');});
       if (!allNums.length) {
-        // No $ signs - try plain numbers
-        allNums = (valueTxt.match(/\b(\d+)\b/g)||[]).filter(function(n){return parseInt(n)>0&&parseInt(n)<50000;});
+        // No $ signs - try plain numbers but exclude years and cert numbers
+        allNums = (valueTxt.match(/\b(\d+)\b/g)||[]).filter(function(n){
+          var num = parseInt(n);
+          // Exclude years (1900-2099), cert numbers (8+ digits), and 0
+          return num > 0 && num < 10000 && !(num >= 1900 && num <= 2099) && n.length < 8;
+        });
       }
       if (!rawMatch && allNums[0]) rawMatch = ['', allNums[0]];
       if (!p10Match && allNums[1]) p10Match = ['', allNums[1]];
