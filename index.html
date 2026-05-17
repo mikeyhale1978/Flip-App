@@ -1117,9 +1117,16 @@ async function doScan() {
         p10Match = ['', allNums[0]];
       }
     }
+    var rv = rawMatch ? parseFloat(rawMatch[1]) : 0;
+    var pv = p10Match ? parseFloat(p10Match[1]) : 0;
+    // Sanity check: PSA 10 should be >= raw value
+    // If raw > psa10 by more than 10%, they may be swapped
+    if (rv > 0 && pv > 0 && rv > pv * 1.1) {
+      var tmp = rv; rv = pv; pv = tmp; // swap them
+    }
     var valueLines = '';
-    if (rawMatch) valueLines += 'rawvalue=' + rawMatch[1] + '\n';
-    if (p10Match) valueLines += 'psa10value=' + p10Match[1] + '\n';
+    if (rv) valueLines += 'rawvalue=' + rv + '\n';
+    if (pv) valueLines += 'psa10value=' + pv + '\n';
     // Join all results but replace the value call result with just the value lines
     var scanParts = [scanResults[0],scanResults[1],valueLines,scanResults[3],scanResults[4],scanResults[5]||''];
     var scanTxt = scanParts.join('\n');
@@ -1207,8 +1214,17 @@ async function doScan() {
       centering: {
         score:  parseFloat(flat.cen_score||flat.centering_score||7)||7,
         status: flat.cen_status||flat.centering_status || 'WARN',
-        left_right_estimate: flat.cen_lr||flat.centering_lr || '',
-        top_bottom_estimate: flat.cen_tb||flat.centering_tb || '',
+        left_right_estimate: (function(){
+          var v = flat.cen_lr||flat.centering_lr||'';
+          // Extract just the ratio like 60/40 from longer descriptions
+          var m = String(v).match(/(\d+\/\d+)/);
+          return m ? m[1] : String(v).slice(0,15);
+        })(),
+        top_bottom_estimate: (function(){
+          var v = flat.cen_tb||flat.centering_tb||'';
+          var m = String(v).match(/(\d+\/\d+)/);
+          return m ? m[1] : String(v).slice(0,15);
+        })(),
         detail: (function(s){s=s||'Could not assess';if(s.length<=120)return s;var t=s.slice(0,120);return t.slice(0,t.lastIndexOf(' '))||t;})(flat.cen_notes||flat.cen_detail||flat.centering_detail)
       },
       corners: {
