@@ -992,7 +992,7 @@ function renderCamResults(r) {
   var gradedProfit=Math.round((r.psa10_est_value||0)*(1-0.129)-0.30-(r.raw_est_value||0)-25-4);
   var gradedROI=(r.raw_est_value>0)?Math.round((gradedProfit/((r.raw_est_value||0)+25+4))*100):0;
   var rawProfit=Math.round(rawFlipEst*(1-0.129)-0.30-(r.raw_est_value||0));
-  var rawROI=(r.raw_est_value>0)?Math.round((rawProfit/(r.raw_est_value||1))*100):0;
+  var rawROI=(r.raw_est_value>2)?Math.round((rawProfit/(r.raw_est_value||1))*100):null;
 
   var html='<div class="panel">'
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
@@ -1043,7 +1043,7 @@ function renderCamResults(r) {
       +'<div class="flip-cell"><div class="flip-lbl">BUY</div><div class="flip-val c-white">$'+r.raw_est_value+'</div></div>'
       +'<div class="flip-cell"><div class="flip-lbl">SELL</div><div class="flip-val c-gold">~$'+rawFlipEst+'</div></div>'
       +'<div class="flip-cell"><div class="flip-lbl">PROFIT</div><div class="flip-val '+(rawProfit>0?'c-green':'c-red')+'">$'+rawProfit+'</div></div>'
-      +'<div class="flip-cell"><div class="flip-lbl">ROI</div><div class="flip-val '+(rawROI>=20?'c-green':'c-gold')+'">'+(rawROI>=0?'+':'')+rawROI+'%</div></div>'
+      +'<div class="flip-cell"><div class="flip-lbl">ROI</div><div class="flip-val '+(rawROI===null?'c-muted':rawROI>=20?'c-green':'c-gold')+'">'+(rawROI===null?'—':rawROI>=0?'+'+rawROI+'%':rawROI+'%')+'</div></div>'
     +'</div>'
     +'<div class="advice-box">'+r.market_notes+'</div>'
   +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);padding:8px 12px;background:rgba(245,197,24,.04);border-top:1px solid var(--border);line-height:1.5">⚠️ <strong style="color:var(--gold)">AI price estimates only</strong> — verify with 📊 SOLD before buying or grading. Parallel variants and inserts may trade significantly lower.</div>'
