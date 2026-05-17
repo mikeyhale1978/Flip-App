@@ -988,6 +988,7 @@ function renderCamResults(r) {
       +'<div class="flip-cell"><div class="flip-lbl">ROI</div><div class="flip-val '+(rawROI>=20?'c-green':'c-gold')+'">'+(rawROI>=0?'+':'')+rawROI+'%</div></div>'
     +'</div>'
     +'<div class="advice-box">'+r.market_notes+'</div>'
+  +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted);padding:8px 12px;background:rgba(245,197,24,.04);border-top:1px solid var(--border);line-height:1.5">⚠️ <strong style="color:var(--gold)">AI price estimates only</strong> — verify with 📊 SOLD before buying or grading. Parallel variants and inserts may trade significantly lower.</div>'
   +'</div>'
   +'<div style="display:flex;gap:5px;margin-bottom:8px">'
   +'<a href="https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(r.player+' '+String(r.card_name).split(' ').slice(0,3).join(' '))+'&LH_Auction=1" target="_blank" class="btn-sm" style="flex:1;text-align:center;padding:10px">🔨 AUCTION</a>'
