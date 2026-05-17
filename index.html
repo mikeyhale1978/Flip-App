@@ -1099,7 +1099,16 @@ async function doScan() {
         for (var i=0;i<names.length;i++) { if (!brands.test(names[i])) return names[i]; }
         return p||'Unknown Card';
       })(),
-      card_name:  String(flat.card_name || flat.card || '').slice(0,45),
+      card_name:  (function(){
+        var cn = String(flat.card_name||flat.card||'').trim();
+        if (!cn || cn==='Unknown' || cn.length<3) {
+          // Try to extract set name from notes
+          var txt = flat.notes||flat.advice||'';
+          var m = txt.match(/20\d\d\s+[A-Z][a-zA-Z\s]+(?:Prizm|Chrome|Topps|Bowman|Select|Mosaic)/);
+          if (m) cn = m[0];
+        }
+        return cn.slice(0,45);
+      })(),
       sport:      flat.sport       || 'Unknown',
       year:       String(flat.year || ''),
       manufacturer: flat.manufacturer || '',
@@ -1116,7 +1125,12 @@ async function doScan() {
       grading_advice: (flat.advice||flat.grading_advice||'Check card carefully before grading.').slice(0,100)+'...',
       raw_est_value:  parseFloat(flat.raw_est_value||flat.raw_value||flat.rawvalue||0)||0,
       psa10_est_value:parseFloat(flat.psa10_est_value||flat.psa10_value||flat.psa10value||0)||0,
-      flip_worthy:    flat.flip_worthy!==false && flat.flip_worthy!=='no' && flat.flip_worthy!==0,
+      flip_worthy:    (function(){
+        var raw=parseFloat(flat.rawvalue||flat.raw_est_value||0)||0;
+        var p10=parseFloat(flat.psa10value||flat.psa10_est_value||0)||0;
+        if(raw>0&&p10>0) return (p10*(1-0.129)-0.30-raw-25-4)>0;
+        return flat.worthy!==false&&flat.worthy!=='no'&&flat.flip_worthy!==false;
+      })(),
       market_notes:   flat.market_notes||flat.notes || 'Check eBay sold listings for current market data.',
       reason:         flat.reason || '',
       centering: {
