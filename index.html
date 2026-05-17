@@ -269,7 +269,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 
   <div class="panel">
-    <div class="field"><label>Card Name / Player / Set</label><input type="text" id="srch-q" placeholder="e.g. Patrick Mahomes 2017 Prizm RC" onkeydown="if(event.key==='Enter')doSearch()"/></div>
+    <div class="field"><label>Card Name / Player / Set</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="srch-q" placeholder="e.g. Patrick Mahomes 2017 Prizm RC" onkeydown="if(event.key==='Enter')doSearch()" style="flex:1"/>
+        <button id="voice-btn" onclick="startVoice()" style="flex-shrink:0;width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--accent);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" title="Voice Search">🎙️</button>
+      </div>
+    </div>
     <div class="field" style="margin-bottom:10px"><label>Type (optional)</label>
       <select id="srch-type">
         <option value="">Any Type</option>
@@ -685,6 +690,59 @@ var srchSteps = ['Looking up card...','Checking eBay sold data...','Pulling pric
 var srchTimer = null, srchIdx = 0;
 
 function qs(q) { document.getElementById('srch-q').value = q; doSearch(); }
+
+function startVoice() {
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    alert('Voice search is not supported on this browser. Try Chrome on Android or Safari on iPhone.');
+    return;
+  }
+  var rec = new SpeechRec();
+  rec.lang = 'en-US';
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  var btn = document.getElementById('voice-btn');
+  btn.textContent = '🔴';
+  btn.style.borderColor = 'var(--red)';
+  btn.style.background = 'rgba(255,68,85,.1)';
+  btn.style.animation = 'spin .7s linear infinite';
+
+  rec.onresult = function(e) {
+    var transcript = e.results[0][0].transcript;
+    document.getElementById('srch-q').value = transcript;
+    btn.textContent = '✅';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.background = 'rgba(0,255,170,.1)';
+    btn.style.animation = '';
+    setTimeout(function() {
+      btn.textContent = '🎙️';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.background = 'var(--card)';
+      doSearch();
+    }, 600);
+  };
+
+  rec.onerror = function(e) {
+    btn.textContent = '🎙️';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--card)';
+    btn.style.animation = '';
+    if (e.error !== 'no-speech') {
+      alert('Voice error: ' + e.error + '. Make sure microphone permission is allowed.');
+    }
+  };
+
+  rec.onend = function() {
+    btn.textContent = '🎙️';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--card)';
+    btn.style.animation = '';
+  };
+
+  rec.start();
+}
 
 async function doSearch() {
   var q = (document.getElementById('srch-q').value||'').trim();
