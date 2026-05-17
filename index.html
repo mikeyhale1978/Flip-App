@@ -1009,7 +1009,7 @@ async function doScan() {
   // 4 tiny parallel calls - each has only 3-4 fields so never truncates
   var gradePrompt  = 'Card grader. This card image. Fill blanks:\nplayer=\ncard_name=\nsport=\nmanufacturer=\ngrade=\nconfidence=\npsa10prob=\nrecommend=';
   var advicePrompt = 'Card expert. One sentence answers only. Fill blanks:\nadvice=\nissue=\nworthy=\nnotes=';
-  var valuePrompt  = 'What are the current eBay sold prices for this trading card? Reply with ONLY two lines, nothing else:\nrawvalue=15\npsa10value=60\nReplace 15 and 60 with real dollar amounts for the card in this image. Only two lines. No other text.';
+  var valuePrompt  = 'Look at this trading card. What is the current raw (ungraded) eBay sold price? What is the PSA 10 graded eBay sold price?\nAnswer with only two numbers on two lines:\nrawvalue=\npsa10value=\nExample response:\nrawvalue=8\npsa10value=35';
   var defect1Prompt= 'Card grader. Centering only. Use PASS WARN or FAIL. Fill blanks:\ncen_score=\ncen_status=\ncen_lr=\ncen_tb=\ncen_notes=';
   var defect3Prompt= 'Card grader. Corners only. Use PASS WARN or FAIL. Fill blanks:\ncor_score=\ncor_status=\ncor_notes=';
   var defect2Prompt= 'Card grader. Edges and surface condition on this card. Use PASS if good, WARN if minor issue, FAIL if serious defect. Fill blanks:\nedg_score=\nedg_status=\nedg_notes=\nsur_score=\nsur_status=\nsur_notes=';
@@ -1026,7 +1026,20 @@ async function doScan() {
       callGemini(defect2Prompt, camB64, camType),
       callGemini(defect3Prompt, camB64, camType)
     ]);
-    var scanTxt = scanResults.join('\n');
+    // Extract values from dedicated value call (index 2) before joining
+    var valueTxt = scanResults[2] || '';
+    // Extract numbers from value response regardless of format
+    var rawMatch = valueTxt.match(/rawvalue[=:\s]+\$?([\d.]+)/i);
+    var p10Match = valueTxt.match(/psa10value[=:\s]+\$?([\d.]+)/i);
+    // Also try just finding dollar amounts if field names missing
+    if (!rawMatch) rawMatch = valueTxt.match(/raw[^\d]*\$?([\d.]+)/i);
+    if (!p10Match) p10Match = valueTxt.match(/psa\s*10[^\d]*\$?([\d.]+)/i);
+    var valueLines = '';
+    if (rawMatch) valueLines += 'rawvalue=' + rawMatch[1] + '\n';
+    if (p10Match) valueLines += 'psa10value=' + p10Match[1] + '\n';
+    // Join all results but replace the value call result with just the value lines
+    var scanParts = [scanResults[0],scanResults[1],valueLines,scanResults[3],scanResults[4],scanResults[5]||''];
+    var scanTxt = scanParts.join('\n');
     clearInterval(scanTimer);
     document.getElementById('scan-loading').classList.remove('show');
 
@@ -1074,7 +1087,7 @@ async function doScan() {
       psa10_probability: parseFloat(flat.psa10_probability||flat.psa10prob||flat.psa10_prob||20)||20,
       biggest_issue:     flat.biggest_issue||flat.issue || 'NONE',
       grading_recommendation: flat.grading_recommendation||flat.recommendation||flat.recommend || 'HOLD',
-      grading_advice: (function(s){s=s||'Check card carefully before grading.';var parts=s.split('.');return (parts[0]+(parts[1]?'.'+parts[1]:'')+'.').slice(0,120);})(flat.advice||flat.grading_advice),
+      grading_advice: (flat.advice||flat.grading_advice||'Check card carefully before grading.').slice(0,100)+'...',
       raw_est_value:  parseFloat(flat.raw_est_value||flat.raw_value||flat.rawvalue||0)||0,
       psa10_est_value:parseFloat(flat.psa10_est_value||flat.psa10_value||flat.psa10value||0)||0,
       flip_worthy:    flat.flip_worthy!==false && flat.flip_worthy!=='no' && flat.flip_worthy!==0,
