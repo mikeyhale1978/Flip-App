@@ -1037,9 +1037,15 @@ async function doScan() {
     // Extract numbers from value response regardless of format
     var rawMatch = valueTxt.match(/rawvalue[=:\s]+\$?([\d.]+)/i);
     var p10Match = valueTxt.match(/psa10value[=:\s]+\$?([\d.]+)/i);
-    // Also try just finding dollar amounts if field names missing
-    if (!rawMatch) rawMatch = valueTxt.match(/raw[^\d]*\$?([\d.]+)/i);
-    if (!p10Match) p10Match = valueTxt.match(/psa\s*10[^\d]*\$?([\d.]+)/i);
+    // Fallback: find any dollar amounts near key words
+    if (!rawMatch) rawMatch = valueTxt.match(/raw[^\d$]{0,30}\$?([\d.]+)/i);
+    if (!p10Match) p10Match = valueTxt.match(/psa\s*10[^\d$]{0,30}\$?([\d.]+)/i);
+    // Last resort: grab first two numbers from response
+    if (!rawMatch || !p10Match) {
+      var allNums = valueTxt.match(/\$([\d.]+)/g)||[];
+      if (!rawMatch && allNums[0]) rawMatch = ['', allNums[0].replace('$','')];
+      if (!p10Match && allNums[1]) p10Match = ['', allNums[1].replace('$','')];
+    }
     var valueLines = '';
     if (rawMatch) valueLines += 'rawvalue=' + rawMatch[1] + '\n';
     if (p10Match) valueLines += 'psa10value=' + p10Match[1] + '\n';
@@ -1083,7 +1089,7 @@ async function doScan() {
         // Build r object matching what renderCamResults expects
     var r = {
       identified: flat.identified !== false && flat.identified !== 'no',
-      player:     flat.player     || 'Unknown Card',
+      player:     flat.player && flat.player!=='Unknown Card' ? flat.player : (flat.notes||flat.advice||'').match(/([A-Z][a-z]+ [A-Z][a-z]+)/)?((flat.notes||flat.advice||'').match(/([A-Z][a-z]+ [A-Z][a-z]+)/)[1]):'Unknown Card',
       card_name:  String(flat.card_name || flat.card || ''),
       sport:      flat.sport       || 'Unknown',
       year:       String(flat.year || ''),
